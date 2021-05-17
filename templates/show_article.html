@@ -1,0 +1,19 @@
+
+{% extends "home.html" %}
+{% block content %}
+<section class="text-center login-page">
+
+
+<div class="card" style="width: 18rem;">
+  <div class="card-body">
+  {% for article in articles %}
+    <h5 class="card-title"> {{article.title}} </h5>
+    
+    <b class="card-text"> {{article.content}} </b>
+     {% endfor %}
+  </div>
+</div>
+
+
+    </section>
+{% endblock %}
