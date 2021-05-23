@@ -128,27 +128,6 @@ def WebRegister(request):
     return render(request, "register.html", {})
 
 
-
-
-'''
-class Post_video(APIView):
-    parser_classes = (MultiPartParser, FormParser)
-    def post(self, request, *args, **kwargs):
-        title = request.POST.get('title')
-        video = request.FILES.get("video")
-        data ={
-            "title" : title,
-            "video" : video
-        }
-        
-        videos = Vidoserializer(data=data)
-        if videos.is_valid():
-            videos.save()
-
-            return redirect('home')
-
-        return render(request, 'post_video.html')
-'''
 def Post_video(request):
 
     if request.method == 'POST':
@@ -244,14 +223,14 @@ def Stripe_config_pay(request):
 @csrf_exempt
 def Create_checkout_session(request):
     if request.method == 'GET':
-        domain_url = "https://speakeasyandpurges.herokuapp.com/"
+        domain_url = "https://speakeasyandpurge-eovuo.ondigitalocean.app/"
         local_url = 'http://localhost:8000/'
         stripe.api_key = settings.STRIPE_SECRET_KEY
         try:
             checkout_session = stripe.checkout.Session.create(
                 client_reference_id=request.user.id if request.user.is_authenticated else None,
-                success_url=domain_url+'success?session_id={CHECKOUT_SESSION_ID}',
-                cancel_url=domain_url+'cancel/',
+                success_url=local_url+'success?session_id={CHECKOUT_SESSION_ID}',
+                cancel_url=local_url+'cancel/',
                 payment_method_types=['card'],
                 mode='subscription',
                 line_items=[
@@ -307,12 +286,41 @@ def stripe_webhook4(request):
 def stripe_webhook(request):
   payload = request.body.decode('utf-8')
   out_put = json.loads(payload)
-  customer_email = out_put["data"]["object"]['customer_email']
+  email = out_put["data"]["object"]['customer_email']
   # =  customer_email.get("customer_email")
   
-  if customer_email:
-      print(customer_email)
-      print("payment sucess")
+  if email:
+      print(email)
+      user = CustomUser.objects.get(email=email)
+      content = {
+          'user': user.email
+      }
+        #update user subscription to be  active
+      user.is_subscription_active = True
+      user.date_subscribed = start_date
+      user.save()
+        #send mail to user for successful subscription
+      content = {
+            'user': user.first_name,
+            'message': '''Congratulation! Your subscription Was Successful,
+                                Login to get start using the App
+                                Your will expire on: '''+str(expiring_date)
+            }
+      send_to = email
+      send_from = EMAIL_HOST_USER
+      subject = "Subscription Successful"
+      message = get_template('email_template.html').render(content)
+      msg = EmailMessage(
+            subject,
+            message,
+            send_from,
+            [send_to],
+      )
+      msg.content_subtype = "html"
+      msg.send(fail_silently=False)
+      print(user.date_subscribed,twomorow, user.is_subscription_active)
+      return Response(content, status= status.HTTP_200_OK)
+      
       
 
   #print(customer_email)

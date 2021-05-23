@@ -38,8 +38,6 @@ urlpatterns =[
     path('webhook/', views.stripe_webhook),
     path("create-checkout-session/", views.Create_checkout_session, name="create_checkout_session"),
     
-
-  
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 
