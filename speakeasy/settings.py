@@ -159,11 +159,18 @@ USE_TZ = True
 #STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 #STATICFILES_DIRS = [os.path.join(
 #BASE_DIR, "static"), '/ Var / www / static /', ]
-STATIC_ROOT = os.path.join(BASE_DIR ,'static')
-STATIC_URL = '/static/'
+
+
+
+#STATIC_ROOT = os.path.join(BASE_DIR ,'static')
+#STATIC_URL = '/static/'
+STATIC_URL = "/static/"
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'static/media/')
 MEDIA_URL = "static/media/"
+
+
 
 
 STRIPE_PUBLISHABLE_KEY = os.getenv('STRIPE_PUBLISHABLE_KEY')
