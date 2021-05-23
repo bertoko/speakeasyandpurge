@@ -18,7 +18,7 @@ SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", get_random_secret_key())
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = ['speakeasyandpurges.herokuapp.com', 'localhost',  '127.0.0.1' ]
+ALLOWED_HOSTS = ['speakeasyandpurge-eovuo.ondigitalocean.app', 'localhost',  '127.0.0.1']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -164,10 +164,10 @@ USE_TZ = True
 
 
 
-#STATIC_ROOT = os.path.join(BASE_DIR ,'static')
-#STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR ,'static')
+
 STATIC_URL = "/static/"
-STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+#STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'static/media/')
 MEDIA_URL = "static/media/"
