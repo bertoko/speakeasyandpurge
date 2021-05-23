@@ -164,15 +164,23 @@ USE_TZ = True
 
 
 
-STATIC_ROOT = os.path.join(BASE_DIR ,'static')
+#STATIC_ROOT = os.path.join(BASE_DIR ,'static')
 
 STATIC_URL = "/static/"
 #STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
-MEDIA_ROOT = os.path.join(BASE_DIR, 'static/media/')
-MEDIA_URL = "static/media/"
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_URL = "/media/"
 
+'''
+STATIC_URL = '/static/'
+'''
 
+STATICFILES_DIRS = (
+    os.path.join(BASE_DIR, 'static'),
+)
+
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 
 STRIPE_PUBLISHABLE_KEY = os.getenv('STRIPE_PUBLISHABLE_KEY')
@@ -184,7 +192,7 @@ STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
 
 #STATICFILES_DIRS = ( os.path.join('static'), )
 
-#STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
+STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
 
 
 
