@@ -79,7 +79,6 @@ ACCOUNT_UNIQUE_EMAIL = True
 
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
-'''
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -104,7 +103,7 @@ elif len(sys.argv) > 0 and sys.argv[1] != 'collectstatic':
     DATABASES = {
         "default": dj_database_url.parse(os.environ.get("DATABASE_URL")),
     }
-
+'''
 
 AUTH_PASSWORD_VALIDATORS = [
     {
