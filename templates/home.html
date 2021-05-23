@@ -4,7 +4,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"> 
     <title>Speakeasy and Purge</title>
     <link rel="stylesheet" type="text/css"   href="{% static 'speakeasyApp/css/index.css' %}" >  
     <link rel="stylesheet" type="text/css"  href="{% static 'speakeasyApp/css/bootstrap.min.css' %}" >  
@@ -23,27 +23,47 @@
     body {background-color: #816E55;}
     .speakeasy-and-purge{
       margin-top: 60px;
-      background-color :#7B684E
+      background-color :#7B684E;
     }
-    .speakeasy-and-purge-caption{
+    .social-media{
+      margin-top: 50px;
+      margin-bottom : 10px;
         
 
     }
+    .copyright{
+      color: #816E55;
+    }
+    .footer{
+      margin-top:100px;
+    }
+
+    .fab{
+  
+  padding: 8px;
+  margin-right: 8px;
+  width: 30px;
+  height: 30px;
+  background: #816E55;
+  border-radius: 15px;
+  color: white;
+  
+}
+  .living{
+    background:#B5B4AC;
+    width :1000px;
+    height : 200px;
+    text-align: center;
+  }
+      @media(max-width:700px){
     .living{
       background:#B5B4AC;
-      width :1000px;
-      height : 200px;
-      text-align: center;
-    }
-       @media(max-width:700px){
-      .living{
-       background:#B5B4AC;
-      width :400px;
-      height : 200px;
-      text-align: center;
-            }
-        
-        }
+    width :400px;
+    height : 200px;
+    text-align: center;
+          }
+      
+      }
 
     p,  h4, h1{
       color : white
@@ -211,12 +231,13 @@ height : 400px
     width: 150px
 }
 section{
-  margin-top: 50px
+  margin-top: 50px;
+  margin-bottom: 50px;
 }
 .card {
-        margin: 0 auto; /* Added */
-        float: none; /* Added */
-        margin-bottom: 10px; /* Added */
+        margin: 0 auto; 
+        float: none; 
+        margin-bottom: 10px; 
 }
     </style>
   </head>
@@ -248,21 +269,21 @@ section{
                   </div>
                </li>
                       <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true"
+                        <a class="nav-link dropdown-toggle" href="" id="navbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true"
                           aria-expanded="false">
                           CALMING VIDEOS
                         </a>
                         <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-                          <a class="dropdown-item" href="#">VIDEOS</a>
+                          <a class="dropdown-item" href="{% url 'showvideo'  %}">VIDEOS</a>
                         </div>
                       </li>
                       <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true"
+                        <a class="nav-link dropdown-toggle" href="" id="navbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true"
                           aria-expanded="false">
                         SAVING PRICE
                       </a>
                         <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-                          <a class="dropdown-item" href="#"> SAVINGS USING THE APP</a>
+                          <a class="dropdown-item" href="{% url 'saving'  %}"> SAVINGS USING THE APP</a>
                 
                         </div>
                      </li>
@@ -272,7 +293,7 @@ section{
                             FUNNEL TO PURGING
                           </a>
                           <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-                            <a class="dropdown-item" href="#"> FUNNEL</a>
+                            <a class="dropdown-item" href="{% url 'funnel'  %}"> FUNNEL</a>
                           </div>
                         </li>
                         {% if first_name %}
@@ -326,13 +347,11 @@ section{
                                 This is an app that will give you a safe place to voice your thoughts 
                                 in the purest form.
                               </p>
-                              <button class="learn">  CLICK HERE AND LEARN HOW YOU SAVE USING THE <br/> SPEAKEASY AND PURGE APP </button>
+                              <button class="learn"> <a href="{% url 'saving'  %}"> CLICK HERE AND LEARN HOW YOU SAVE USING THE <br/> SPEAKEASY AND PURGE APP </a> </button>
 
                           </div>
                     </div>
                 </div>
-
-
 
                 <div class="container" >
                 <h2 class="purging"> PURGING IS THE NEW RELEASE </h2>
@@ -417,13 +436,9 @@ section{
 </form>
 </div>
   <div>
-
-  
-  
-  
         {% endblock %}
         <footer class="footer"> 
-        <div class=" container">
+        <div class=" container social-media">
                     <div class="row">
                           <div class="col">
                           <i class="fab fa-facebook"></i>
@@ -433,12 +448,10 @@ section{
 
                           </div>
                     </div>
-
-                </div>
-        
-        <div class="container text-center">
+                </div>  
+        <div class="container text-center ">
             <div class="row">
-                <div class="col">
+                <div class="col copyright">
                     <b> copyright@ <b id="year">  </b>: Speakeasy and Purge - All Rights Reserved </b>
                 </div>
             </div>

@@ -1,0 +1,691 @@
+from django.shortcuts import render,redirect
+from django.http.response import JsonResponse, HttpResponse 
+from rest_framework.response import Response
+from django.views.decorators.csrf import csrf_exempt
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated  
+from rest_framework import status
+from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework.authtoken.models import Token
+from .form import VideoForm
+
+#import for background schuduler
+import threading
+import schedule
+
+#Time and date module
+import datetime
+from datetime import date, timedelta
+import time
+
+#stripe for payment and subscription
+import stripe
+
+#django send mail module
+from django.template import Context
+from django.template.loader import render_to_string, get_template
+from django.core.mail import EmailMessage
+from django.core.mail import send_mail
+import json
+# self define Module
+from .appserializers import UserSerializer, ArticleSerializer, VideoSerializer
+from .models import CustomUser, Video, Article
+from .form import VideoForm
+from speakeasy.settings import EMAIL_HOST_USER
+
+###########################################################################
+#Updating multiple objects at once
+#Entry.objects.filter(pub_date__year=2007).update(headline='Everything is the same')
+###################################################################################
+from django.conf import settings
+#from django.contrib.auth.decorators import login_required
+#from django.contrib.auth.models import User  # new
+ # updated
+#from subscriptions.models import StripeCustomer  # new
+
+def Home(request):
+    
+    if "user" in request.session:
+        user = request.session["user"]
+        first_name = user.get("first_name")
+        context =  {
+            "first_name" : first_name
+        }
+        return render(request, "home.html", context= context)
+    else:
+        return render(request, "home.html")
+
+
+    return render(request, 'home.html')
+
+def WebLogin(request):
+    error =  {"message" :"Invalid Email Or Pin"}
+    success = {"message": "Login successful"}
+    if request.method == "POST":
+        pin = request.POST.get("pin")
+        email = request.POST.get("email")    
+        try:
+            user = CustomUser.objects.get(email=email)
+            if (email == user.email) and (pin == user.pin):
+                context = {
+                    "pk": user.pk,
+                    "email":  user.email,
+                    "first_name": user.first_name,
+                }
+                request.session['user'] = context
+                return redirect("/")
+            else:
+                context = {
+                    "message" : "Wrong Email Or Pin"
+                }
+                return render(request, "login.html", context=context)
+
+        except CustomUser.DoesNotExist:
+            
+            context = {
+                "message" : "User Does Not Exist"
+            }
+            return render(request, "login.html", context=context)
+            
+                 
+    return render(request, "login.html")
+
+
+
+def WebLogout(request):
+
+    del request.session['user']
+
+    return redirect("/weblogin")
+
+
+def WebRegister(request):
+    data = {
+        "message": "User Already Registered"
+    }
+    message = "User Already Registered"
+    data = CustomUser()
+    if request.method == "POST":
+        qry = request.POST.get("first_name")
+        data.first_name = request.POST.get("first_name")
+        data.last_login = request.POST.get("last_name")
+        email = request.POST.get("email")
+        data.pin = request.POST.get("pin")
+        current_time = datetime.datetime.now()
+        data.username = qry + str(current_time.strftime('%Y%m%d%H%M'))
+        data.email = email
+        
+        try:
+            user = CustomUser.objects.get(email = email)
+            context = {
+                "email": user.email+" "+" Already Exist"
+            }
+            return render(request, "register.html", context=context)
+        except:
+            data.save()
+            return render(request, "login.html" )
+    return render(request, "register.html", {})
+
+
+
+
+'''
+class Post_video(APIView):
+    parser_classes = (MultiPartParser, FormParser)
+    def post(self, request, *args, **kwargs):
+        title = request.POST.get('title')
+        video = request.FILES.get("video")
+        data ={
+            "title" : title,
+            "video" : video
+        }
+        
+        videos = Vidoserializer(data=data)
+        if videos.is_valid():
+            videos.save()
+
+            return redirect('home')
+
+        return render(request, 'post_video.html')
+'''
+def Post_video(request):
+
+    if request.method == 'POST':
+        video = VideoForm(request.POST, request.FILES)
+        if video.is_valid():
+            print("is valid")
+            video.save()
+        return render(request, 'post_video.html')
+
+    return render(request, 'post_video.html')
+
+#Post_video   Post_article
+def Display_video(request):
+    video = Video.objects.all()
+    context = {
+        'video': video,
+    }
+
+    return render(request, 'show_video.html', {"video" : video})
+
+def Post_article(request):
+
+    if request.method == 'POST':
+
+        title = request.POST['title']
+        content = request.POST['content']
+
+        data = Article(title=title, content=content)
+        data.save()
+        return redirect('home')
+
+    return render(request, 'post_article.html')
+
+
+def Display_article(request):
+
+
+    posts = Article.objects.all()
+    context = {
+        'articles': posts,
+    }
+
+    return render(request, 'show_article.html', context)
+
+def Saving(request):
+    return render(request, 'saving.html')
+
+def Funnel(request):
+    return render(request, 'funnel.html')
+
+def WebRetrieve_pin(request):
+    if request.method == "POST":
+        email = request.POST.get("email")
+        try:
+            user = CustomUser.objects.get(email=email)
+            content = {
+                'user': "KELVIN",
+                'message': 'Your pin has been retrieved successful, your pin is: '+ user.pin
+            }
+            print(user.pin)
+            print(EMAIL_HOST_USER)
+            send_to = user.email
+            send_from = EMAIL_HOST_USER
+            subject = "Pin Rest"
+            message = get_template('email_template.html').render(content)
+            msg = EmailMessage(
+                subject,
+                message,
+                send_from,
+                [send_to],
+            )
+            msg.content_subtype = "html"
+            msg.send()
+            context = {"message" : "Check your Email for your Pin" }
+            return redirect("weblogin")
+        except:
+
+
+            context = {
+                'message': 'Email does not exist'
+            }
+        return render(request, "retreve_pin.html", context=context)
+    
+
+    return render(request, 'retreve_pin.html')
+
+@csrf_exempt
+def Stripe_config_pay(request):
+    if request.method == 'GET':
+        stripe_config = {'publicKey': settings.STRIPE_PUBLISHABLE_KEY}
+        return JsonResponse(stripe_config, safe=False)
+
+@csrf_exempt
+def Create_checkout_session(request):
+    if request.method == 'GET':
+        domain_url = "https://speakeasyandpurges.herokuapp.com/"
+        local_url = 'http://localhost:8000/'
+        stripe.api_key = settings.STRIPE_SECRET_KEY
+        try:
+            checkout_session = stripe.checkout.Session.create(
+                client_reference_id=request.user.id if request.user.is_authenticated else None,
+                success_url=domain_url+'success?session_id={CHECKOUT_SESSION_ID}',
+                cancel_url=domain_url+'cancel/',
+                payment_method_types=['card'],
+                mode='subscription',
+                line_items=[
+                    {
+                        'price': settings.STRIPE_PRICE_ID,
+                        'quantity': 1,
+                    }
+                ]
+            )
+            return JsonResponse({'sessionId': checkout_session['id']})
+        except Exception as e:
+            return JsonResponse({'error': str(e)})
+
+
+#@login_required
+def success(request):
+    return render(request, 'success.html')
+
+
+#@login_required
+def cancel(request):
+    return render(request, 'cancel.html')
+
+@api_view(['POST'])
+def stripe_webhook4(request):
+    stripe.api_key = settings.STRIPE_SECRET_KEY
+    endpoint_secret = settings.STRIPE_ENDPOINT_SECRET
+    payload = request.body
+    sig_header = request.META['HTTP_STRIPE_SIGNATURE']
+    event = None
+
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, endpoint_secret
+        )
+    except ValueError as e:
+        print("invaild payload")
+        # Invalid payload
+        return HttpResponse(status=400)
+    except stripe.error.SignatureVerificationError as e:
+        print("invalid sigature")
+        return HttpResponse(status=400)
+
+    # Handle the checkout.session.completed event
+    if event['type'] == 'checkout.session.completed':
+        print("Payment was successful.")
+        #
+
+    return HttpResponse(status=200)
+
+
+@csrf_exempt
+def stripe_webhook(request):
+  payload = request.body.decode('utf-8')
+  out_put = json.loads(payload)
+  customer_email = out_put["data"]["object"]['customer_email']
+  # =  customer_email.get("customer_email")
+  
+  if customer_email:
+      print(customer_email)
+      print("payment sucess")
+      
+
+  #print(customer_email)
+  #print(email)
+
+  #checkout= pay["type"]
+  #print(customer_email)
+  '''
+  event = None
+  endpoint_secret = settings.STRIPE_ENDPOINT_SECRET
+  try:
+    event = stripe.Webhook.construct_event(
+        payload, sig_header, endpoint_secret
+    )
+  except ValueError as e:
+    print("Invalid signature")
+    return HttpResponse(status=400)
+  except stripe.error.SignatureVerificationError as e:
+    print("Invalid signature")
+    return HttpResponse(status=400)
+
+  # Handle the event
+  if event.type == 'payment_intent.succeeded':
+    payment_intent = event.data.object  # contains a stripe.PaymentIntent
+    print('PaymentIntent was successful!')
+  elif event.type == 'payment_method.attached':
+    payment_method = event.data.object  # contains a stripe.PaymentMethod
+    print('PaymentMethod was attached to a Customer!')
+  # ... handle other event types
+  else:
+    print('Unhandled event type {}'.format(event.type))
+'''
+  return HttpResponse(status=200)
+
+
+
+@api_view(['POST'])
+def mail(request):
+    
+    content = {
+        'user': "KELVIN",
+        'message': 'Your pin has been retrieved successful, your pin is: '
+    }
+    send_to = "egobakelvin@gmail.com"
+    send_from = EMAIL_HOST_USER
+    subject = "Pin Rest"
+    message = get_template('email_template.html').render(content)
+    msg = EmailMessage(
+        subject,
+        message,
+        send_from,
+        [send_to],
+    )
+    msg.content_subtype = "html"
+    msg.send()
+
+    return Response({'status': status.HTTP_200_OK})
+
+    return Response(content) 
+
+
+@api_view(['GET'])
+def Show_article(request):
+    if request.method == "GET":
+        article = Article.objects.all()
+        articles = ArticleSerializer(article, many=True)
+        return Response(articles.data, status= status.HTTP_200_OK)
+    return Response(articles.errors, status= status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET'])
+def  Show_video(request):
+    if request.method == "GET":
+        video = Video.objects.all()
+        videos = VideoSerializer(video, many=True)
+        return Response(videos.data, status= status.HTTP_200_OK)
+    return Response(videos.errors, status= status.HTTP_400_BAD_REQUEST)
+
+
+
+@api_view(['POST'])
+def Retrieve_pin(request):
+    email = request.data.get('email')
+    try:
+        user = CustomUser.objects.get(email=email)
+        print(user.email)
+        if user:
+            content = {
+            'user': user.first_name,
+            'message' : 'Your pin has been retrieved successful, your pin is: '+user.pin
+            }
+            send_to = user.email
+            send_from = EMAIL_HOST_USER
+            subject = "Pin Rest"
+            message = get_template('email_template.html').render(content)
+            msg = EmailMessage(
+                subject,
+                message,
+                send_from,
+                [send_to],
+            )
+            msg.content_subtype = "html" 
+            msg.send(fail_silently=False)
+
+            return Response({'status' : status.HTTP_200_OK})
+        else:
+            return Response({
+                'error_message': "Invalid Pin or Email", 
+                'status ' : status.HTTP_400_BAD_REQUEST
+                
+            })
+    except:
+        return Response({ 
+            'error_message': "User Does Not exist" ,
+            'status' : status.HTTP_400_BAD_REQUEST
+            })
+
+
+#the class that will handle login
+class C_Login(ObtainAuthToken):
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data,
+                                           context={'request': request})
+        today = datetime.date.today()                             
+        email = request.data.get('email')
+        pin = request.data.get('pin')
+        print(pin)
+        try:
+            user = CustomUser.objects.get(email=email)
+            if (user.email == email) and (user.pin == pin): 
+                token, created = Token.objects.get_or_create(user=user)
+                if (user.date_subscribed == None) or (user.date_subscribed.strftime('%Y%m%d') <= today.strftime('%Y%m%d')):
+                    print("user not active" "data sub", user.date_subscribed , "today", today)
+                    return Response({
+                        'token': token.key,
+                        'email': user.email,
+                        'name' : user.last_name + " " + user.first_name,
+                        'is_subscription_active' : False,
+                        'message' : "subscription is due",
+                        'status' : status.HTTP_200_OK
+
+                    })
+                else:
+                    print("active")
+                    return Response({
+                        'token': token.key,
+                        'user_id': user.pk,
+                        'email': user.email,
+                        'name' : user.last_name + "  " + user.first_name,
+                        'is_subscription_active' : user.is_subscription_active,
+                        'message' : "Login Successful",
+                        'status' : status.HTTP_200_OK
+
+                    })
+                
+            else:
+                
+                return Response({
+                    'error_message': "Invalid Pin or Email", 
+                    'status ' : status.HTTP_400_BAD_REQUEST
+                    
+                })
+        except:
+            return Response({ 
+                'error_message': "User Does Not exist" ,
+                'status' : status.HTTP_400_BAD_REQUEST
+                })
+
+
+
+
+#the function that will handle user registration
+@api_view(["POST"])
+def RegisterUser(request):
+    if request.method == "POST":
+        user = request.data
+        first_name = request.data.get('first_name')
+        last_name = request.data.get('last_name')
+        email = request.data.get('email')
+        pin = request.data.get('pin')
+        current_time = datetime.datetime.now()
+        username = first_name+str(current_time.strftime('%Y%m%d%H%M'))
+        data = {
+            "first_name" :  first_name,
+            "last_name" : last_name,
+            "email" :  email,
+            "pin"   :  pin,
+            "username" : username
+        }
+        register = UserSerializer(data=data)
+        if register.is_valid():
+            register.save()
+            content = {
+            'user': first_name,
+            'message' : 'Congratulation! Your Registration Was Successful, Login to subscribe and start using the App'
+            }
+            send_to = email
+            send_from = EMAIL_HOST_USER
+            subject = "Registraton Successful"
+            message = get_template('email_template.html').render(content)
+            msg = EmailMessage(
+                subject,
+                message,
+                send_from,
+                [send_to],
+            )
+            msg.content_subtype = "html"  # Main content is now text/html
+            msg.send(fail_silently=False)
+            return Response(register.data, status= status.HTTP_200_OK)
+    return Response(register.errors, status= status.HTTP_400_BAD_REQUEST)
+
+
+
+
+class HelloView(APIView):
+    permission_classes = (IsAuthenticated,)  
+    def get(self, request):
+        content = {'message': 'Hello, World!'}
+        return Response(content) 
+
+#@permission_classes([IsAuthenticated])
+@api_view(['GET'])
+def Get_all_users(request):
+
+    if request.method == "GET":
+        users = Video.objects.all()
+
+        users = VideoSerializer(users, many=True)
+        return Response(users.data, status= status.HTTP_200_OK)
+    return Response(users.errors, status= status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def example(request, format=None):
+    content = {
+        'status': 'request was permitted'
+    }
+    return Response(content)
+
+
+#funtion tha will handle subscription and creact charge
+@api_view(['GET', 'POST'])
+def Subscribe_user( request):
+    #it will return Todays date
+    today = datetime.date.today()
+    twomorow = today - datetime.timedelta(days = 29 ) 
+    start_date = today- timedelta(days=27)
+    end_date = today - timedelta(days=30)
+    
+    #it will give you 30 days interval
+    expiring_date =  today + datetime.timedelta(days = 30 )
+    if request.method == "POST":
+        email = request.data.get('email')
+        user = CustomUser.objects.get(email=email)
+        content={
+            'user' : user.email
+        }
+        #update user subscription to be  active
+        user.is_subscription_active = True
+        user.date_subscribed  = start_date
+        user.save()
+        #send mail to user for successful subscription
+        content = {
+            'user': user.first_name,
+            'message' : '''Congratulation! Your subscription Was Successful,
+                                Login to get start using the App 
+                                Your will expire on: '''+str(expiring_date)
+            }
+        send_to = email
+        send_from = EMAIL_HOST_USER
+        subject = "Subscription Successful"
+        message = get_template('email_template.html').render(content)
+        msg = EmailMessage(
+            subject,
+            message,
+            send_from,
+            [send_to],
+        )
+        msg.content_subtype = "html" 
+        msg.send(fail_silently=False)
+    print(user.date_subscribed,twomorow, user.is_subscription_active)
+    return Response(content, status= status.HTTP_200_OK)
+    return Response(content, status= status.HTTP_400_BAD_REQUEST)
+
+#@sched.scheduled_job('interval', seconds = 10 )
+@api_view(['GET', 'POST'])
+def Check_due_subscribers(request):
+    today = date.today()
+    start_date = today- timedelta(days=27)
+    end_date = today - timedelta(days=30)
+    print(start_date, "and", new_end)
+    due_subscribers = CustomUser.objects.filter(
+                                    date_subscribed__range=[end_date, start_date]
+                                    ).values_list('email', flat=True)
+    print(due_subscribers)
+
+    content =  {
+        'due_subscribers' : "kelvin not noon"       
+    }
+
+    '''
+    ### check the database where two_days_interval is equal to subscription_date or less than
+    qry = queryset.objects.filter(date_subscribed < = two_days_interval )
+    #send a reminder mail 
+    do stuf
+
+    elsif :
+        ### check the database where today is equal to subscription_date or less than
+        qry = queryset.objects.filter(date_subscribed < = today)
+        #send mail that subscription has expired
+
+
+
+    '''
+    return Response(content)
+
+   
+
+
+
+#creating a check_out session
+
+
+
+
+'''
+
+#Application scheduler
+
+#@sched.scheduled_job('interval', seconds = 10 )
+def timed_job():
+    print('This job is run every three minutes am here')
+
+
+
+def run_continuously(interval=20):
+    """Continuously run, while executing pending jobs at each
+    elapsed time interval.
+    @return cease_continuous_run: threading. Event which can
+    be set to cease continuous run. Please note that it is
+    *intended behavior that run_continuously() does not run
+    missed jobs*. For example, if you've registered a job that
+    should run every minute and you set a continuous run
+    interval of one hour then your job won't be run 60 times
+    at each interval but only once.
+    """
+    cease_continuous_run = threading.Event()
+
+    class ScheduleThread(threading.Thread):
+        @classmethod
+        def run(cls):
+            while not cease_continuous_run.is_set():
+                schedule.run_pending()
+                time.sleep(interval)
+
+    continuous_thread = ScheduleThread()
+    continuous_thread.start()
+    return cease_continuous_run
+
+
+def background_job():
+    print('Hello from the background thread')
+
+
+schedule.every().second.do(background_job)
+
+# Start the background thread
+stop_run_continuously = run_continuously()
+
+# Do some other things...
+time.sleep(20)
+
+
+
+
+'''
