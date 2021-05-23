@@ -1,0 +1,144 @@
+footer{
+
+     margin-top: 150px;
+     height: 100px;
+     text-align: center;
+
+    
+}
+
+
+.fa{
+    padding: 15px;
+}
+
+.ref-2{
+    width: 300px
+}
+
+.navbar{
+      background:#739DF3;
+}
+.mydata{
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+    align-items: center;
+    
+}
+.form{
+    display: flex;
+flex-direction: column;
+margin-top: 15px;
+margin-bottom: 15px;
+text-align: center
+}
+
+@media(max-width:700px){
+  input[type="text"],button[type="submit"],input[type="pin"], 
+  .select[type="text"] , input[type="password"] , .btn{
+  margin:1px ;
+  width: 90%;
+  height: 60%;
+  padding: 1px;
+  border-radius: 40px;
+  outline: none;
+  margin-top: 40px;
+  
+  }
+}
+
+input[type="text"],input[type="password"],
+ input[type="email"], input[type="pin" ],
+ button[type="submit"], select[type="select"],
+ textarea[type="textarea"], .btn{
+
+     margin:1px ;
+  width: 90%;
+  height: 60%;
+  padding: 1px;
+  border-radius: 40px;
+  outline: none;
+  margin-top: 40px;
+}
+
+@media(max-width:700px){
+  input[type="text"],button[type="submit"],input[type="file"], 
+  textarea[type="textarea"] , input[type="password"]{
+  margin:1px ;
+  width: 90%;
+  height: 60%;
+  padding: 1px;
+  outline: none;
+    margin-top: 40px;
+  
+  
+  }
+}
+.btn{
+    width: 150px
+}
+
+th{
+    
+    background: #739DF3;
+}
+
+
+th,td{
+    width: 150px;
+    height: 20px;
+    border: 1px solid black;
+}
+
+
+.anger-content{
+    margin-top: 20px;
+}
+
+
+
+    body {background-color: #816E55;}
+    .speakeasy-and-purge{
+      margin-top: 60px;
+      background-color :#7B684E
+    }
+    .speakeasy-and-purge-caption{
+        
+
+    }
+    .living{
+      background:#B5B4AC;
+      width :1000px;
+      height : 200px;
+      text-align: center;
+    }
+    p,  h4, h1{
+      color : white
+    }
+
+
+.speak-img{
+width : 1000px;
+height : 600px
+      }
+
+
+
+@media(min-width:700px){
+.speak-img{
+width : 100px;
+height : 200px
+      }
+  
+  }
+  
+@media(max-width:702px){
+.yugo-img, .funnel-img{
+width : 500px;
+height : 400px
+    }
+
+}
+
+  
