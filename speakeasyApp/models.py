@@ -1,13 +1,9 @@
 from django.db import models
 from django.contrib.auth.models import  AbstractUser
 
-
-
-
 # Create your models here
 
 class CustomUser(AbstractUser):
-    #username= None
     email = models.EmailField("email", max_length=30,null=False, unique = True, )
     date_subscribed = models.DateField("date subscribed", null=True, auto_now_add=False)
     is_subscription_active = models.BooleanField("subscription_status" , default=False)
@@ -32,9 +28,6 @@ class Video(models.Model):
 
     def __str__(self):
         return self.title
-
-
-
 
 class Article(models.Model):
     id  = models.AutoField(primary_key=True)

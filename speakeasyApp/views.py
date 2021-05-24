@@ -9,7 +9,7 @@ from rest_framework import status
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
 from .form import VideoForm
-
+import random
 #import for background schuduler
 import threading
 import schedule
@@ -109,11 +109,13 @@ def WebRegister(request):
     if request.method == "POST":
         qry = request.POST.get("first_name")
         data.first_name = request.POST.get("first_name")
-        data.last_login = request.POST.get("last_name")
+        data.last_name = request.POST.get("last_name")
         email = request.POST.get("email")
         data.pin = request.POST.get("pin")
         current_time = datetime.datetime.now()
-        data.username = qry + str(current_time.strftime('%Y%m%d%H%M'))
+
+        current = str(current_time.strftime('%Y%m%d%H%M'))
+        data.username = qry + current
         data.email = email
         
         try:
@@ -187,8 +189,6 @@ def WebRetrieve_pin(request):
                 'user': "KELVIN",
                 'message': 'Your pin has been retrieved successful, your pin is: '+ user.pin
             }
-            print(user.pin)
-            print(EMAIL_HOST_USER)
             send_to = user.email
             send_from = EMAIL_HOST_USER
             subject = "Pin Rest"
@@ -223,14 +223,14 @@ def Stripe_config_pay(request):
 @csrf_exempt
 def Create_checkout_session(request):
     if request.method == 'GET':
-        domain_url = "https://speakeasyandpurge-eovuo.ondigitalocean.app/"
+        domain_url ="https://speakeasyandpurge-eovuo.ondigitalocean.app/"
         local_url = 'http://localhost:8000/'
         stripe.api_key = settings.STRIPE_SECRET_KEY
         try:
             checkout_session = stripe.checkout.Session.create(
                 client_reference_id=request.user.id if request.user.is_authenticated else None,
-                success_url=local_url+'success?session_id={CHECKOUT_SESSION_ID}',
-                cancel_url=local_url+'cancel/',
+                success_url=domain_url+'success?session_id={CHECKOUT_SESSION_ID}',
+                cancel_url=domain_url+'cancel/',
                 payment_method_types=['card'],
                 mode='subscription',
                 line_items=[
@@ -256,6 +256,7 @@ def cancel(request):
 
 @api_view(['POST'])
 def stripe_webhook4(request):
+
     stripe.api_key = settings.STRIPE_SECRET_KEY
     endpoint_secret = settings.STRIPE_ENDPOINT_SECRET
     payload = request.body
@@ -284,76 +285,54 @@ def stripe_webhook4(request):
 
 @csrf_exempt
 def stripe_webhook(request):
-  payload = request.body.decode('utf-8')
-  out_put = json.loads(payload)
-  email = out_put["data"]["object"]['customer_email']
+    today = datetime.date.today()
+    twomorow = today - datetime.timedelta(days = 29 ) 
+    start_date = today- timedelta(days=27)
+    expiring_date = today - timedelta(days=30)
+
+    payload = request.body.decode('utf-8')
+    out_put = json.loads(payload)
+    email = out_put["data"]["object"]['customer_email']
   # =  customer_email.get("customer_email")
   
-  if email:
-      print(email)
-      user = CustomUser.objects.get(email=email)
-      content = {
-          'user': user.email
-      }
-        #update user subscription to be  active
-      user.is_subscription_active = True
-      user.date_subscribed = start_date
-      user.save()
-        #send mail to user for successful subscription
-      content = {
-            'user': user.first_name,
-            'message': '''Congratulation! Your subscription Was Successful,
-                                Login to get start using the App
-                                Your will expire on: '''+str(expiring_date)
-            }
-      send_to = email
-      send_from = EMAIL_HOST_USER
-      subject = "Subscription Successful"
-      message = get_template('email_template.html').render(content)
-      msg = EmailMessage(
-            subject,
-            message,
-            send_from,
-            [send_to],
-      )
-      msg.content_subtype = "html"
-      msg.send(fail_silently=False)
-      print(user.date_subscribed,twomorow, user.is_subscription_active)
-      return Response(content, status= status.HTTP_200_OK)
-      
+    if email:
+        user = CustomUser.objects.get(email=email)
+        content = {
+            'user': user.email
+        }
+            #update user subscription to be  active
+        user.is_subscription_active = True
+        user.date_subscribed = start_date
+        user.save()
+            #send mail to user for successful subscription
+        content = {
+                'user': user.first_name,
+                'message': '''Congratulation! Your subscription Was Successful,
+                                    Login to get start using the App
+                                    Your will expire on: '''+str(expiring_date)
+                }
+        send_to = email
+        send_from = EMAIL_HOST_USER
+        subject = "Subscription Successful"
+        message = get_template('email_template.html').render(content)
+        msg = EmailMessage(
+                subject,
+                message,
+                send_from,
+                [send_to],
+        )
+        msg.content_subtype = "html"
+        msg.send(fail_silently=False)
+        print(user.date_subscribed,twomorow, user.is_subscription_active)
+        return Response(content, status= status.HTTP_200_OK)
+        
       
 
   #print(customer_email)
   #print(email)
 
-  #checkout= pay["type"]
-  #print(customer_email)
-  '''
-  event = None
-  endpoint_secret = settings.STRIPE_ENDPOINT_SECRET
-  try:
-    event = stripe.Webhook.construct_event(
-        payload, sig_header, endpoint_secret
-    )
-  except ValueError as e:
-    print("Invalid signature")
-    return HttpResponse(status=400)
-  except stripe.error.SignatureVerificationError as e:
-    print("Invalid signature")
-    return HttpResponse(status=400)
 
-  # Handle the event
-  if event.type == 'payment_intent.succeeded':
-    payment_intent = event.data.object  # contains a stripe.PaymentIntent
-    print('PaymentIntent was successful!')
-  elif event.type == 'payment_method.attached':
-    payment_method = event.data.object  # contains a stripe.PaymentMethod
-    print('PaymentMethod was attached to a Customer!')
-  # ... handle other event types
-  else:
-    print('Unhandled event type {}'.format(event.type))
-'''
-  return HttpResponse(status=200)
+    return HttpResponse(status=200)
 
 
 
@@ -611,7 +590,6 @@ def Check_due_subscribers(request):
     today = date.today()
     start_date = today- timedelta(days=27)
     end_date = today - timedelta(days=30)
-    print(start_date, "and", new_end)
     due_subscribers = CustomUser.objects.filter(
                                     date_subscribed__range=[end_date, start_date]
                                     ).values_list('email', flat=True)
@@ -621,21 +599,24 @@ def Check_due_subscribers(request):
         'due_subscribers' : "kelvin not noon"       
     }
 
-    '''
-    ### check the database where two_days_interval is equal to subscription_date or less than
-    qry = queryset.objects.filter(date_subscribed < = two_days_interval )
-    #send a reminder mail 
-    do stuf
-
-    elsif :
-        ### check the database where today is equal to subscription_date or less than
-        qry = queryset.objects.filter(date_subscribed < = today)
-        #send mail that subscription has expired
-
-
-
-    '''
-    return Response(content)
+    content = {
+            
+            'message' : 'Your subscription will expire Soon '
+    }
+    
+    send_from = EMAIL_HOST_USER
+    subject = "Reminder"
+    message = get_template('email_template.html').render(content)
+    msg = EmailMessage(
+        subject,
+        message,
+        send_from,
+        due_subscribers,
+    )
+    msg.content_subtype = "html"  # Main content is now text/html
+    msg.send(fail_silently=False)
+    return Response(register.data, status= status.HTTP_200_OK)
+    
 
    
 
