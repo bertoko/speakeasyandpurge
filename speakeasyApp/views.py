@@ -123,9 +123,9 @@ def WebRegister(request):
         email = request.POST.get("email")
         data.pin = request.POST.get("pin")
         current_time = datetime.datetime.now()
-
         current = str(current_time.strftime('%Y%m%d%H%M'))
-        data.username = qry + current
+        username = str(qry) + str(current)
+        data.username = username
         data.email = email
         
         try:
@@ -145,6 +145,7 @@ def WebRegister(request):
 
 
 def Post_video(request):
+    
 
     if request.method == 'POST':
         video = VideoForm(request.POST, request.FILES)
@@ -538,7 +539,7 @@ class HelloView(APIView):
 def Get_all_users(request):
 
     if request.method == "GET":
-        users = Video.objects.all()
+        users = CustomUser.objects.all()
 
         users = VideoSerializer(users, many=True)
         return Response(users.data, status= status.HTTP_200_OK)
