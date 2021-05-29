@@ -1,5 +1,8 @@
 from django.db import models
-from django.contrib.auth.models import  AbstractUser
+from django.contrib.auth.models import  AbstractUser, User
+
+
+
 
 # Create your models here
 
@@ -10,14 +13,19 @@ class CustomUser(AbstractUser):
     stripeCustomerId = models.CharField(max_length=255)
     stripeSubscriptionId = models.CharField(max_length=255)
     pin = models.CharField("pin", null=False, max_length=6)
+
+
+
     
+
+
 
 
 class Video(models.Model):
     id  = models.AutoField(primary_key=True)
     title = models.CharField(max_length=100)
     author = models.CharField(max_length=50)
-    video = models.FileField(upload_to='media/')
+    video = models.FileField()
     date_posted = models.DateTimeField("date posted", null=True, auto_now_add=True)
 
 
@@ -35,5 +43,18 @@ class Article(models.Model):
     content= models.CharField(max_length=500)
     author = models.CharField(max_length=50)
     date_posted = models.DateTimeField("date posted", null=True, auto_now_add=True)
-    
 
+    
+'''   
+class UserModel(models.Model):
+    date_subscribed = models.DateField("date subscribed", null=True, auto_now_add=False)
+    is_subscription_active = models.BooleanField("subscription_status" , default=False)
+    stripeCustomerId = models.CharField(max_length=255)
+    stripeSubscriptionId = models.CharField(max_length=255)
+    pin = models.CharField("pin", null=False, max_length=6)
+    user = models.OneToOneField(User, null=True, blank=True, on_delete=models.CASCADE)
+    first_name = models.CharField(max_length=200, null=True)
+    last_name = models.CharField(max_length=200, null=True)
+    email = models.CharField(max_length=200, null=True)
+    date_created = models.DateTimeField(auto_now_add=True, null=True)
+'''

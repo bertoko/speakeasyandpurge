@@ -32,8 +32,12 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     "django_static_fontawesome",
     'corsheaders',
+    'storages',
     'django_apscheduler' ,
     'speakeasyApp',
+    
+
+    
 ]
 
 MIDDLEWARE = [
@@ -161,16 +165,11 @@ USE_TZ = True
 
 #STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
-
 STATIC_URL = "/static/"
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+
 #STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATICFILES_DIRS = (
-    os.path.join(BASE_DIR, 'static' ),
-
-    
-)
 
 
 
@@ -186,14 +185,43 @@ STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
 
 #STATICFILES_DIRS = ( os.path.join('static'), )
 
-STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
+#STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
+
+'''
+
+AWS_ACCESS_KEY_ID = 'AKIATUHS4DKSJOAUYW4Z'
+AWS_SECRET_ACCESS_KEY = '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'
+AWS_STORAGE_BUCKET_NAME = 'speakeasystatic'
+AWS_S3_CUSTOM_DOMAIN = '%s.s3.amazonaws.com' % AWS_STORAGE_BUCKET_NAME
+AWS_QUERYSTRING_AUTH = False
+AWS_S3_ENDPOINT_URL = 'https://s3.amazonaws.com'
+AWS_DEFAULT_ACL = 'public-read'
+AWS_S3_OBJECT_PARAMETERS = {
+    'CacheControl': 'max-age=86400',
+}
+
+AWS_LOCATION = 'static'
+STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+MEDIA_URL = 'https://speakeasystatic.s3.amazonaws.com/'
 
 
 
+DEFAULT_FILE_STORAGE = 'speakeasy.storage_backends.MediaStorage'
+#DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage' 
+#PRIVATE_FILE_STORAGE = 'speaskeasy.storage_backends.PrivateMediaStorage'
 
+'''
+AWS_LOCATION = 'media'
+AWS_ACCESS_KEY_ID = 'AKIATUHS4DKSJDVHAHRL'
+AWS_SECRET_ACCESS_KEY = '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'
+AWS_STORAGE_BUCKET_NAME = 'speakeasystatic'
+AWS_S3_CUSTOM_DOMAIN = '%s.s3.amazonaws.com' % AWS_STORAGE_BUCKET_NAME
 
+AWS_S3_FILE_OVERWRITE = False
+AWS_DEFAULT_ACL = 'public-read'
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+S3_URL = '//%s.s3.amazonaws.com/' % AWS_STORAGE_BUCKET_NAME
+MEDIA_URL = '//%s.s3.amazonaws.com/media/' % AWS_STORAGE_BUCKET_NAME
+MEDIA_ROOT = MEDIA_URL
 
-
-
-
-
+#STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'

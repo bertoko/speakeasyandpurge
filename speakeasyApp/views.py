@@ -33,6 +33,8 @@ from .appserializers import UserSerializer, ArticleSerializer, VideoSerializer
 from .models import CustomUser, Video, Article
 from .form import VideoForm
 from speakeasy.settings import EMAIL_HOST_USER
+from django.views.generic import TemplateView
+
 
 ###########################################################################
 #Updating multiple objects at once
@@ -43,6 +45,14 @@ from django.conf import settings
 #from django.contrib.auth.models import User  # new
  # updated
 #from subscriptions.models import StripeCustomer  # new
+class CarView(TemplateView):
+    template_name = 'post_video.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['videos'] = Video.objects.all()
+        return context
+
 
 def Home(request):
     
@@ -95,7 +105,7 @@ def WebLogin(request):
 
 def WebLogout(request):
 
-    del request.session['user']
+   # del request.session['user']
 
     return redirect("/weblogin")
 
@@ -120,12 +130,16 @@ def WebRegister(request):
         
         try:
             user = CustomUser.objects.get(email = email)
-            context = {
-                "email": user.email+" "+" Already Exist"
-            }
-            return render(request, "register.html", context=context)
-        except:
-            data.save()
+            if user:
+                print(user)
+                context = {
+                    "email": user.email+" "+" Already Exist"
+                }
+                return render(request, "register.html", context=context)
+            else:
+                data.save()
+            return render(request, "login.html")
+        except :
             return render(request, "login.html" )
     return render(request, "register.html", {})
 
@@ -135,7 +149,6 @@ def Post_video(request):
     if request.method == 'POST':
         video = VideoForm(request.POST, request.FILES)
         if video.is_valid():
-            print("is valid")
             video.save()
         return render(request, 'post_video.html')
 
