@@ -38,8 +38,7 @@
       margin-top:100px;
     }
 
-    .fab{
-  
+  .fab{
   padding: 8px;
   margin-right: 8px;
   width: 30px;
@@ -173,12 +172,17 @@ height : 400px
   background: #fff;
   color : #816E55
 }
+input[type="file"] {
+    background: #fff;
+    padding: 6px 12px;
+    cursor: pointer;
+}
 
 @media(max-width:700px){
   input[type="text"],button[type="submit"],input[type="file"], 
   textarea[type="textarea"] , input[type="password"]{
   margin:1px ;
-  width: 90%;
+  width:90%% ;
   height: 60%;
   padding: 1px;
   outline: none;
@@ -204,7 +208,7 @@ height : 400px
   textarea[type="textarea"]{
   margin:5px ;
   width: 90%;
-  height: 100%;
+  height: 2000px;
   padding: 1px;
   outline: none;
     margin-top: 40px;
@@ -222,7 +226,7 @@ height : 400px
   height: 60%;
   padding: 1px;
   outline: none;
-    margin-top: 40px;
+  margin-top: 40px;
   
   
   }
@@ -234,7 +238,7 @@ section{
   margin-top: 50px;
   margin-bottom: 50px;
 }
-.card {
+.card,social-media{
         margin: 0 auto; 
         float: none; 
         margin-bottom: 10px; 
@@ -255,10 +259,7 @@ section{
           <li class="nav-item active">
             <a class="nav-link" href="{% url 'home' %}">Home <span class="sr-only">(current)</span></a>
           </li>
-                     {% if is_staff %}
-                        <li class="nav-item"><a class="nav-link"  id="submitBtn">  POST VIDEO </a></li>
-                        <li class="nav-item"><a class="nav-link" href="{% url 'weblogout'  %}"> POST ARTICLES </a></li>
-                        {% endif %}
+              
                 <li class="nav-item dropdown">
                   <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true"
                     aria-expanded="false">
@@ -300,10 +301,14 @@ section{
                             <a class="dropdown-item" href="{% url 'funnel'  %}"> FUNNEL</a>
                           </div>
                         </li>
-                        {% if first_name %}
+                        
+                        {% if is_staff %}
+                        <li class="nav-item"><a class="nav-link"  href="{% url 'postvideo'  %}">  POST VIDEO </a></li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'postarticle'  %}"> POST ARTICLES </a></li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'weblogout'  %}"> Logout </a></li>
+                        {% elif first_name  %}
                         <li class="nav-item"><a class="nav-link"  id="submitBtn">  MAKE PAYMENT </a></li>
                         <li class="nav-item"><a class="nav-link" href="{% url 'weblogout'  %}"> Logout </a></li>
-                        
                         {% else %}
 
                         <li class="nav-item"><a class="nav-link" href="{% url 'weblogin' %}"> Login </a></li>
@@ -313,7 +318,7 @@ section{
       </div>
     </nav>
     {% block content %}
-        <h4> Hi {{ first_name }}  </h4>
+        
    <div class=" container home-content"  >
         <div class=" container anger-content">
         <div class=" container speakeasy-and-purge">
@@ -422,7 +427,6 @@ section{
                     </div>
 
                 </div>
-                 
                           </div>
                     </div>
 
@@ -441,7 +445,7 @@ section{
 </div>
   <div>
         {% endblock %}
-        <footer class="footer"> 
+        <footer class="footer text-center"> 
         <div class=" container social-media">
                     <div class="row">
                           <div class="col">

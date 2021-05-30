@@ -8,8 +8,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
-from .form import VideoForm
-import random
+
+
 #import for background schuduler
 import threading
 import schedule
@@ -34,51 +34,32 @@ from .models import CustomUser, Video, Article
 from .form import VideoForm
 from speakeasy.settings import EMAIL_HOST_USER
 from django.views.generic import TemplateView
-
-
-###########################################################################
-#Updating multiple objects at once
-#Entry.objects.filter(pub_date__year=2007).update(headline='Everything is the same')
-###################################################################################
 from django.conf import settings
-#from django.contrib.auth.decorators import login_required
-#from django.contrib.auth.models import User  # new
- # updated
-#from subscriptions.models import StripeCustomer  # new
-class CarView(TemplateView):
-    template_name = 'post_video.html'
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['videos'] = Video.objects.all()
-        return context
-
-
+#it return home page on web
 def Home(request):
     
     if "user" in request.session:
         user = request.session["user"]
         first_name = user.get("first_name")
         context =  {
-            "first_name" : first_name
+            "first_name" : first_name,
+            "is_staff" : user["is_staff"]
         }
         return render(request, "home.html", context= context)
-    else:
-        return render(request, "home.html")
+    
+    return render(request, "home.html")
 
-
-    return render(request, 'home.html')
-
+############################################################
+#funtion that handle login on web
+##############################################################
 def WebLogin(request):
-    error =  {"message" :"Invalid Email Or Pin"}
-    success = {"message": "Login successful"}
     if request.method == "POST":
         pin = request.POST.get("pin")
         email = request.POST.get("email")    
         try:
             user = CustomUser.objects.get(email=email)
             if (email == user.email) and (pin == user.pin):
-                print(user.is_staff)
                 context = {
                     "pk": user.pk,
                     "email":  user.email,
@@ -104,19 +85,15 @@ def WebLogin(request):
     return render(request, "login.html")
 
 
-
+#function that handle logout
 def WebLogout(request):
 
-   # del request.session['user']
+    del request.session['user']
 
     return redirect("/weblogin")
 
 
 def WebRegister(request):
-    data = {
-        "message": "User Already Registered"
-    }
-    message = "User Already Registered"
     data = CustomUser()
     if request.method == "POST":
         qry = request.POST.get("first_name")
@@ -133,7 +110,6 @@ def WebRegister(request):
         try:
             user = CustomUser.objects.get(email = email)
             if user:
-                print(user)
                 context = {
                     "email": user.email+" "+" Already Exist"
                 }
@@ -142,13 +118,12 @@ def WebRegister(request):
                 data.save()
             return render(request, "login.html")
         except :
+            data.save()
             return render(request, "login.html" )
     return render(request, "register.html", {})
 
 
 def Post_video(request):
-
-
     if request.method == 'POST':
         video = VideoForm(request.POST, request.FILES)
         if video.is_valid():
@@ -270,58 +245,27 @@ def success(request):
 def cancel(request):
     return render(request, 'cancel.html')
 
-@api_view(['POST'])
-def stripe_webhook4(request):
-
-    stripe.api_key = settings.STRIPE_SECRET_KEY
-    endpoint_secret = settings.STRIPE_ENDPOINT_SECRET
-    payload = request.body.decode('utf-8')
-    sig_header = request.META['HTTP_STRIPE_SIGNATURE']
-    event = None
-
-    try:
-        event = stripe.Webhook.construct_event(
-            payload, sig_header, endpoint_secret
-        )
-    except ValueError as e:
-        print("invaild payload")
-        # Invalid payload
-        return HttpResponse(status=400)
-    except stripe.error.SignatureVerificationError as e:
-        print("invalid sigature")
-        return HttpResponse(status=400)
-
-    # Handle the checkout.session.completed event
-    if event['type'] == 'checkout.session.completed':
-        print("Payment was successful.")
-        #
-
-    return HttpResponse(status=200)
 
 
+#stripe Webhook that handle subscriptions
 @csrf_exempt
 def stripe_webhook(request):
     today = datetime.date.today()
-    twomorow = today - datetime.timedelta(days = 29 ) 
-    start_date = today- timedelta(days=27)
-    expiring_date = today - timedelta(days=30)
-
+    expiring_date = today + timedelta(days=30)
     payload = request.body.decode('utf-8')
     out_put = json.loads(payload)
     email = out_put["data"]["object"]['customer_email']
-  # =  customer_email.get("customer_email")
-  
     if email:
         user = CustomUser.objects.get(email=email)
         content = {
             'user': user.email
         }
-            #update user subscription to be  active
+        #update user subscription to be  active
         user.is_subscription_active = True
         user.date_subscribed = today
         user.save()
         print("updated successuf")
-            #send mail to user for successful subscription
+        #send mail to user for successful subscription
         content = {
                 'user': user.first_name,
                 'message': '''Congratulation! Your subscription Was Successful,
@@ -340,22 +284,13 @@ def stripe_webhook(request):
         )
         msg.content_subtype = "html"
         msg.send(fail_silently=False)
-        print(user.date_subscribed,twomorow, user.is_subscription_active)
         return Response(content, status= status.HTTP_200_OK)
-        
-      
-
-  #print(customer_email)
-  #print(email)
-
-
     return HttpResponse(status=200)
 
 
 
 @api_view(['POST'])
 def mail(request):
-    
     content = {
         'user': "KELVIN",
         'message': 'Your pin has been retrieved successful, your pin is: '
@@ -375,7 +310,7 @@ def mail(request):
 
     return Response({'status': status.HTTP_200_OK})
 
-    return Response(content) 
+    
 
 
 @api_view(['GET'])
@@ -386,7 +321,7 @@ def Show_article(request):
         return Response(articles.data, status= status.HTTP_200_OK)
     return Response(articles.errors, status= status.HTTP_400_BAD_REQUEST)
 
-
+#diplay Video for API
 @api_view(['GET'])
 def  Show_video(request):
     if request.method == "GET":
@@ -396,7 +331,7 @@ def  Show_video(request):
     return Response(videos.errors, status= status.HTTP_400_BAD_REQUEST)
 
 
-
+#RETRIEVE PIN FOR API AND SEND IT VIA MAIL
 @api_view(['POST'])
 def Retrieve_pin(request):
     email = request.data.get('email')
@@ -435,7 +370,7 @@ def Retrieve_pin(request):
             })
 
 
-#the class that will handle login
+#the class that will handle login and generate token for user
 class C_Login(ObtainAuthToken):
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data,
@@ -488,7 +423,7 @@ class C_Login(ObtainAuthToken):
 
 
 
-#the function that will handle user registration
+#the function that will handle user registration for API
 @api_view(["POST"])
 def RegisterUser(request):
     if request.method == "POST":
@@ -523,7 +458,7 @@ def RegisterUser(request):
                 send_from,
                 [send_to],
             )
-            msg.content_subtype = "html"  # Main content is now text/html
+            msg.content_subtype = "html" 
             msg.send(fail_silently=False)
             return Response(register.data, status= status.HTTP_200_OK)
     return Response(register.errors, status= status.HTTP_400_BAD_REQUEST)
@@ -537,16 +472,6 @@ class HelloView(APIView):
         content = {'message': 'Hello, World!'}
         return Response(content) 
 
-#@permission_classes([IsAuthenticated])
-@api_view(['GET'])
-def Get_all_users(request):
-
-    if request.method == "GET":
-        users = CustomUser.objects.all()
-
-        users = VideoSerializer(users, many=True)
-        return Response(users.data, status= status.HTTP_200_OK)
-    return Response(users.errors, status= status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -597,9 +522,7 @@ def Subscribe_user( request):
         )
         msg.content_subtype = "html" 
         msg.send(fail_silently=False)
-    print(user.date_subscribed,twomorow, user.is_subscription_active)
     return Response(content, status= status.HTTP_200_OK)
-    return Response(content, status= status.HTTP_400_BAD_REQUEST)
 
 #@sched.scheduled_job('interval', seconds = 10 )
 @api_view(['GET', 'POST'])
@@ -630,22 +553,32 @@ def Check_due_subscribers(request):
         send_from,
         due_subscribers,
     )
-    msg.content_subtype = "html"  # Main content is now text/html
+    msg.content_subtype = "html" 
     msg.send(fail_silently=False)
-    return Response(register.data, status= status.HTTP_200_OK)
+    return Response( status= status.HTTP_200_OK)
     
 
-#For Admin to make user staff.
+#For Admin to make user staff for ADMIN only
 @api_view(['GET', 'POST'])
 def Make_user_admin(request):
     if request.method == "POST":
         email = request.data.get('email')
         user = CustomUser.objects.get(email=email)
-        #update user subscription to be  active
         user.is_staff = True
         user.save()
     return Response(status=status.HTTP_200_OK)
 
+#get all the users for Admin only
+#@permission_classes([IsAuthenticated])
+@api_view(['GET'])
+def Get_all_users(request):
+
+    if request.method == "GET":
+        users = CustomUser.objects.all()
+
+        users = VideoSerializer(users, many=True)
+        return Response(users.data, status=status.HTTP_200_OK)
+    return Response(users.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 #creating a check_out session
@@ -653,15 +586,8 @@ def Make_user_admin(request):
 
 
 
+
 '''
-
-#Application scheduler
-
-#@sched.scheduled_job('interval', seconds = 10 )
-def timed_job():
-    print('This job is run every three minutes am here')
-
-
 
 def run_continuously(interval=20):
     """Continuously run, while executing pending jobs at each
@@ -688,11 +614,42 @@ def run_continuously(interval=20):
     return cease_continuous_run
 
 
-def background_job():
-    print('Hello from the background thread')
+def Check_due_subscribed_users():
+    today = date.today()
+    start_date = today - timedelta(days=30)
+    end_date = today - timedelta(days=27)
+    due_subscribers = CustomUser.objects.filter(
+        date_subscribed__range=[start_date, end_date]
+    ).values_list('email', flat=True)
+    if due_subscribers:
+        content = {
+            'due_subscribers': "kelvin not noon"
+        }
+
+        content = {
+
+            'message': 'Your subscription will expire Soon '
+        }
+
+        send_from = EMAIL_HOST_USER
+        subject = "Reminder"
+        message = get_template('email_template.html').render(content)
+        msg = EmailMessage(
+            subject,
+            message,
+            send_from,
+            due_subscribers,
+        )
+        msg.content_subtype = "html" 
+        msg.send(fail_silently=False)
+        return Response(status=status.HTTP_200_OK)
+    else:
+        print("no due subscribers")
+
+    return Response(status=status.HTTP_200_OK)
 
 
-schedule.every().second.do(background_job)
+schedule.every().second.do(Check_due_subscribed_users)
 
 # Start the background thread
 stop_run_continuously = run_continuously()
@@ -702,5 +659,5 @@ time.sleep(20)
 
 
 
-
 '''
+

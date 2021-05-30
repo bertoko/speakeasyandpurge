@@ -2,10 +2,6 @@ from rest_framework import serializers
 from .models import CustomUser, Article, Video
 #from models import Subscription, UserProfile from .appserializers import  UserSerializer
 
-
-
-
-
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser

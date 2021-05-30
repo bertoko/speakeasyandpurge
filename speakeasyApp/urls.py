@@ -5,10 +5,6 @@ from django.conf.urls.static import static
 from django.conf import settings
 from django.views.static import serve
 
-
-
-
-
 urlpatterns =[
   #ApI URLs
     path("api/v1.0/register/", views.RegisterUser, name="RegisterUser"),
@@ -24,7 +20,7 @@ urlpatterns =[
     #stripe configuration and website url
     path('', views.Home, name='home'),
     path("webregister/", views.WebRegister, name='webregister' ),
-    path("weblogin/", views.WebLogin, name='weblogin'),  # weblogout
+    path("weblogin/", views.WebLogin, name='weblogin'),  
     path("weblogout/", views.WebLogout, name='weblogout'),  #
     path("postvideo/", views.Post_video, name='postvideo'),
     path("postarticle/", views.Post_article, name='postarticle'), 
