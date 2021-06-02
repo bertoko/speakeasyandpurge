@@ -1,10 +1,10 @@
 
 // Get Stripe publishable key
-fetch("/config/")
+fetch("/payment/")
   .then((result) => { return result.json(); })
   .then((data) => {
     // Initialize Stripe.js
-    console.log(data, "this is the data")
+
     const stripe = Stripe(data.publicKey);
 
     // Event handler and button
@@ -20,7 +20,6 @@ fetch("/config/")
             return stripe.redirectToCheckout({ sessionId: data.sessionId })
           })
           .then((res) => {
-            console.log(res);
           });
       });
     }

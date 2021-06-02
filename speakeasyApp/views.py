@@ -78,10 +78,12 @@ def WebLogin(request):
         try:
             user = CustomUser.objects.get(email=email)
             if (email == user.email) and (pin == user.pin):
+                print(user.is_staff)
                 context = {
                     "pk": user.pk,
                     "email":  user.email,
                     "first_name": user.first_name,
+                    "is_staff" : user.is_staff
                 }
                 request.session['user'] = context
                 return redirect("/")
@@ -145,7 +147,7 @@ def WebRegister(request):
 
 
 def Post_video(request):
-    
+
 
     if request.method == 'POST':
         video = VideoForm(request.POST, request.FILES)
@@ -273,7 +275,7 @@ def stripe_webhook4(request):
 
     stripe.api_key = settings.STRIPE_SECRET_KEY
     endpoint_secret = settings.STRIPE_ENDPOINT_SECRET
-    payload = request.body
+    payload = request.body.decode('utf-8')
     sig_header = request.META['HTTP_STRIPE_SIGNATURE']
     event = None
 
@@ -316,8 +318,9 @@ def stripe_webhook(request):
         }
             #update user subscription to be  active
         user.is_subscription_active = True
-        user.date_subscribed = start_date
+        user.date_subscribed = today
         user.save()
+        print("updated successuf")
             #send mail to user for successful subscription
         content = {
                 'user': user.first_name,
@@ -440,12 +443,12 @@ class C_Login(ObtainAuthToken):
         today = datetime.date.today()                             
         email = request.data.get('email')
         pin = request.data.get('pin')
-        print(pin)
         try:
             user = CustomUser.objects.get(email=email)
+            print(user.is_staff)
             if (user.email == email) and (user.pin == pin): 
                 token, created = Token.objects.get_or_create(user=user)
-                if (user.date_subscribed == None) or (user.date_subscribed.strftime('%Y%m%d') <= today.strftime('%Y%m%d')):
+                if (user.date_subscribed == None) or (user.date_subscribed.strftime('%Y%m%d') < today.strftime('%Y%m%d')):
                     print("user not active" "data sub", user.date_subscribed , "today", today)
                     return Response({
                         'token': token.key,
@@ -457,7 +460,7 @@ class C_Login(ObtainAuthToken):
 
                     })
                 else:
-                    print("active")
+
                     return Response({
                         'token': token.key,
                         'user_id': user.pk,
@@ -632,7 +635,16 @@ def Check_due_subscribers(request):
     return Response(register.data, status= status.HTTP_200_OK)
     
 
-   
+#For Admin to make user staff.
+@api_view(['GET', 'POST'])
+def Make_user_admin(request):
+    if request.method == "POST":
+        email = request.data.get('email')
+        user = CustomUser.objects.get(email=email)
+        #update user subscription to be  active
+        user.is_staff = True
+        user.save()
+    return Response(status=status.HTTP_200_OK)
 
 
 
