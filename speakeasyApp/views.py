@@ -243,11 +243,62 @@ def success(request):
 
 #@login_required
 def cancel(request):
+    stripe.api_key = settings.STRIPE_SECRET_KEY
+    
+    
+
     return render(request, 'cancel.html')
 
+@api_view(['POST'])
+def Api_Cancel(request):
+    stripe.api_key = settings.STRIPE_SECRET_KEY
+    email = request.data.get('email')
+    user = CustomUser.objects.get(email=email)
+    subscription_id = user.stripeSubscriptionId
+    #data = stripe.Subscription.retrieve(subscription_id)
+    #is_subscription_active = data['plan']['active']
+    try:
+        data = stripe.Subscription.delete(subscription_id)
+        status =  data["status"]
+        if status == "cancel":
+            user.is_subscription_active = False
+            user.save()
+            print("unsubscribe successful")
+            #send mail to user for successful subscription
+            content = {
+                'user': user.first_name,
+                'message': '''You have Successfully Unsubscribe for Speakeasy 
+                                        and Purge Service 
+                                        Kindly hit on Subcribe to get started Again'''
+            }
+            send_to = email
+            send_from = EMAIL_HOST_USER
+            subject = "Subscription Successful"
+            message = get_template('email_template.html').render(content)
+            msg = EmailMessage(
+                subject,
+                message,
+                send_from,
+                [send_to],
+            )
+            msg.content_subtype = "html"
+            msg.send(fail_silently=False)
+            return Response({
+                            'is_subscription_active': False,
+                            "subscription_type": user.subscription_type,
+                            'status': status.HTTP_200_OK
+
+                            })
+    except:
+        message = {
+            "message" : " subscription does not exist!"
+        }
+        return Response(message, status=status.HTTP_200_OK)
+
+    return HttpResponse(status=200)
 
 
-#stripe Webhook that handle subscriptions
+#stripe Webhook that handle subscription
 @csrf_exempt
 def stripe_webhook(request):
     today = datetime.date.today()
@@ -255,6 +306,13 @@ def stripe_webhook(request):
     payload = request.body.decode('utf-8')
     out_put = json.loads(payload)
     email = out_put["data"]["object"]['customer_email']
+    session = out_put['data']['object']
+    client_reference_id = session.get('client_reference_id')
+    stripe_customer_id = session.get('customer')
+    stripe_subscription_id = session.get('subscription')
+    print(client_reference_id,"client reference")
+    print(stripe_customer_id, " stripe   customernid")
+    print(stripe_subscription_id, " stripe subscriptiom id")
     if email:
         user = CustomUser.objects.get(email=email)
         content = {
@@ -263,14 +321,18 @@ def stripe_webhook(request):
         #update user subscription to be  active
         user.is_subscription_active = True
         user.date_subscribed = today
+        user.stripeSubscriptionId  = stripe_subscription_id
+        user.stripeCustomerId = stripe_customer_id
+        user.subscription_type  = "SUBSCRIPTION"
         user.save()
         print("updated successuf")
         #send mail to user for successful subscription
+        
         content = {
                 'user': user.first_name,
                 'message': '''Congratulation! Your subscription Was Successful,
                                     Login to get start using the App
-                                    Your will expire on: '''+str(expiring_date)
+                                    Your subscription will expire on: '''+str(expiring_date)
                 }
         send_to = email
         send_from = EMAIL_HOST_USER
@@ -286,31 +348,6 @@ def stripe_webhook(request):
         msg.send(fail_silently=False)
         return Response(content, status= status.HTTP_200_OK)
     return HttpResponse(status=200)
-
-
-
-@api_view(['POST'])
-def mail(request):
-    content = {
-        'user': "KELVIN",
-        'message': 'Your pin has been retrieved successful, your pin is: '
-    }
-    send_to = "egobakelvin@gmail.com"
-    send_from = EMAIL_HOST_USER
-    subject = "Pin Rest"
-    message = get_template('email_template.html').render(content)
-    msg = EmailMessage(
-        subject,
-        message,
-        send_from,
-        [send_to],
-    )
-    msg.content_subtype = "html"
-    msg.send()
-
-    return Response({'status': status.HTTP_200_OK})
-
-    
 
 
 @api_view(['GET'])
@@ -341,7 +378,7 @@ def Retrieve_pin(request):
         if user:
             content = {
             'user': user.first_name,
-            'message' : 'Your pin has been retrieved successful, your pin is: '+user.pin
+            'message' : 'Your pin was been retrieved successfully. Your pin is: '+user.pin
             }
             send_to = user.email
             send_from = EMAIL_HOST_USER
@@ -373,6 +410,7 @@ def Retrieve_pin(request):
 #the class that will handle login and generate token for user
 class C_Login(ObtainAuthToken):
     def post(self, request, *args, **kwargs):
+        stripe.api_key = settings.STRIPE_SECRET_KEY
         serializer = self.serializer_class(data=request.data,
                                            context={'request': request})
         today = datetime.date.today()                             
@@ -380,18 +418,47 @@ class C_Login(ObtainAuthToken):
         pin = request.data.get('pin')
         try:
             user = CustomUser.objects.get(email=email)
-            print(user.is_staff)
             if (user.email == email) and (user.pin == pin): 
                 token, created = Token.objects.get_or_create(user=user)
-                if (user.date_subscribed == None) or (user.date_subscribed.strftime('%Y%m%d') < today.strftime('%Y%m%d')):
-                    print("user not active" "data sub", user.date_subscribed , "today", today)
+                if user.subscription_type == "SUBSCRIPTION":
+                    try:
+                        data = stripe.Subscription.retrieve(user.stripeSubscriptionId)
+                        if data:
+                            active = data['plan']['active']
+                            is_subscription_active = str(active).capitalize()
+                            return Response({
+                            'token': token.key,
+                            'user_id': user.pk,
+                            'email': user.email,
+                            'name' : user.last_name + "  " + user.first_name,
+                            'is_subscription_active' : is_subscription_active,
+                            "subscription_type" : user.subscription_type,
+                            'message' : "Login Successful",
+                            'status' : status.HTTP_200_OK
+
+                        })
+                    except:
+                        return Response({
+                        'token': token.key,
+                        'email': user.email,
+                        'name' : user.last_name + " " + user.first_name,
+                        'is_subscription_active' : False,
+                        'message' : "subscription is due",
+                         "subscription_type" : user.subscription_type,
+                        'status' : status.HTTP_200_OK
+                       
+
+                    })
+                elif (user.date_subscribed == None) or (user.date_subscribed.strftime('%Y%m%d') < today.strftime('%Y%m%d')):
                     return Response({
                         'token': token.key,
                         'email': user.email,
                         'name' : user.last_name + " " + user.first_name,
                         'is_subscription_active' : False,
                         'message' : "subscription is due",
+                         "subscription_type" : user.subscription_type,
                         'status' : status.HTTP_200_OK
+                       
 
                     })
                 else:
@@ -402,6 +469,7 @@ class C_Login(ObtainAuthToken):
                         'email': user.email,
                         'name' : user.last_name + "  " + user.first_name,
                         'is_subscription_active' : user.is_subscription_active,
+                         "subscription_type" : user.subscription_type,
                         'message' : "Login Successful",
                         'status' : status.HTTP_200_OK
 
@@ -446,7 +514,7 @@ def RegisterUser(request):
             register.save()
             content = {
             'user': first_name,
-            'message' : 'Congratulation! Your Registration Was Successful, Login to subscribe and start using the App'
+            'message' : 'Congratulations! Your registration was Successful. Login to subscribe and start using the App'
             }
             send_to = email
             send_from = EMAIL_HOST_USER

@@ -5,7 +5,8 @@ from .models import CustomUser, Article, Video
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ['pk', 'email','first_name', "is_staff", 'username','last_name',  'pin', 'is_subscription_active']
+        fields = ['pk', 'email', 'first_name', "is_staff", 'username',
+                  'last_name',  'pin', 'is_subscription_active', 'subscription_type']
         
 
 

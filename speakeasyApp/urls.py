@@ -15,6 +15,7 @@ urlpatterns =[
     path('api/v1.0/article/', views.Show_article, name="article"),
     path("getuser/", views.Get_all_users ),
     path("example/", views.example ),
+    path('api/v1.0/cancel/', views.Api_Cancel),
     path("mail/", views.mail ), 
     path("staffing/", views.Make_user_admin ),
     #stripe configuration and website url

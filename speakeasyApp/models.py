@@ -12,6 +12,7 @@ class CustomUser(AbstractUser):
     is_subscription_active = models.BooleanField("subscription_status" , default=False)
     stripeCustomerId = models.CharField(max_length=255)
     stripeSubscriptionId = models.CharField(max_length=255)
+    subscription_type = models.CharField(max_length=255,null=True )
     pin = models.CharField("pin", null=False, max_length=6)
 
 

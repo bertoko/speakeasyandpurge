@@ -23,8 +23,26 @@
     body {background-color: #816E55;}
     .speakeasy-and-purge{
       margin-top: 60px;
-      background-color :#7B684E;
+      
+      width: 100%
     }
+
+     @media(min-width:700px){
+     .speakeasy-and-purge{
+      margin-top: 60px;
+      width: 1200px;
+    }
+
+   
+ }
+    @media(max-width:700px){
+     .speakeasy-and-purge{
+      margin-top: 60px;
+      width: 320px;
+    }
+
+   
+ }
     .social-media{
       margin-top: 50px;
       margin-bottom : 10px;
@@ -48,22 +66,28 @@
   color: white;
   
 }
-  .living{
+ @media(max-width:700px){
+     .living{
+    background:#B5B4AC;
+    width :300px;
+    height : 200px;
+    text-align: center;
+    margin : 20px;
+  }
+   
+ }
+
+  
+    @media(min-width:701px){
+    .living{
     background:#B5B4AC;
     width :1000px;
     height : 200px;
     text-align: center;
-  }
-      @media(max-width:700px){
-    .living{
-      background:#B5B4AC;
-    width :400px;
-    height : 200px;
-    text-align: center;
+     margin : 20px;
           }
       
       }
-
     p,  h4, h1{
       color : white
     }
@@ -82,35 +106,32 @@
         
       }
 
-      .speak-img{
-        width : 1000px;
-         height : 600px;
+@media(min-width:700px){
+.speak-img{
+width : 1000px;
+height : 400px
       }
-      @media(max-width:700px){
-      .speak-img{
-      width : 200px;
-      height : 200px
-            }
-        
-        }
+  
+  }
 @media(max-width:700px){
 .speak-img{
-width : 200px;
-height : 200px
+width : 300px;
+height : 200px;
     }
 
 }
 @media(max-width:702px){
 .yugo-img, .funnel-img{
-width : 300px;
-height : 400px
+width : 290px;
+height : 400px;
+margin-left : 5px
     }
 
 }
 @media(min-width:700px){
 .yugo-img, .funnel-img{
 width : 500px;
-height : 400px
+height : 400px;
     }
 
 }
@@ -119,10 +140,6 @@ height : 400px
   background : #F6F6F6;
   color :#816E55
 }
-
-
-
-
 
 .btn-member{
   background : #816E55;
@@ -182,11 +199,12 @@ input[type="file"] {
   input[type="text"],button[type="submit"],input[type="file"], 
   textarea[type="textarea"] , input[type="password"]{
   margin:1px ;
-  width:90%% ;
+  width:100% ;
   height: 60%;
   padding: 1px;
   outline: none;
-    margin-top: 40px;
+  margin-top: 40px;
+  border-radius: 25px;
   
   
   }
@@ -227,6 +245,8 @@ input[type="file"] {
   padding: 1px;
   outline: none;
   margin-top: 40px;
+  border-radius: 25px;
+
   
   
   }
@@ -305,10 +325,11 @@ section{
                         {% if is_staff %}
                         <li class="nav-item"><a class="nav-link"  href="{% url 'postvideo'  %}">  POST VIDEO </a></li>
                         <li class="nav-item"><a class="nav-link" href="{% url 'postarticle'  %}"> POST ARTICLES </a></li>
-                        <li class="nav-item"><a class="nav-link" href="{% url 'weblogout'  %}"> Logout </a></li>
-                        {% elif first_name  %}
                         <li class="nav-item"><a class="nav-link"  id="submitBtn">  MAKE PAYMENT </a></li>
                         <li class="nav-item"><a class="nav-link" href="{% url 'weblogout'  %}"> Logout </a></li>
+                        {% elif first_name  %}
+                        <li class="nav-item"><a class="nav-link" href="{% url 'weblogout'  %}"> Logout </a></li>
+                        <li class="nav-item"><a class="nav-link"  id="submitBtn">  MAKE PAYMENT </a></li>
                         {% else %}
 
                         <li class="nav-item"><a class="nav-link" href="{% url 'weblogin' %}"> Login </a></li>
