@@ -15,13 +15,6 @@ class CustomUser(AbstractUser):
     subscription_type = models.CharField(max_length=255,null=True )
     pin = models.CharField("pin", null=False, max_length=6)
 
-
-
-    
-
-
-
-
 class Video(models.Model):
     id  = models.AutoField(primary_key=True)
     title = models.CharField(max_length=100)
@@ -45,17 +38,3 @@ class Article(models.Model):
     author = models.CharField(max_length=50)
     date_posted = models.DateTimeField("date posted", null=True, auto_now_add=True)
 
-    
-'''   
-class UserModel(models.Model):
-    date_subscribed = models.DateField("date subscribed", null=True, auto_now_add=False)
-    is_subscription_active = models.BooleanField("subscription_status" , default=False)
-    stripeCustomerId = models.CharField(max_length=255)
-    stripeSubscriptionId = models.CharField(max_length=255)
-    pin = models.CharField("pin", null=False, max_length=6)
-    user = models.OneToOneField(User, null=True, blank=True, on_delete=models.CASCADE)
-    first_name = models.CharField(max_length=200, null=True)
-    last_name = models.CharField(max_length=200, null=True)
-    email = models.CharField(max_length=200, null=True)
-    date_created = models.DateTimeField(auto_now_add=True, null=True)
-'''

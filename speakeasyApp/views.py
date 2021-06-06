@@ -324,7 +324,6 @@ def stripe_webhook(request):
         user.stripeCustomerId = stripe_customer_id
         user.subscription_type  = "SUBSCRIPTION"
         user.save()
-        print("updated successuf")
         #send mail to user for successful subscription
         
         content = {
@@ -600,7 +599,6 @@ def Check_due_subscribers(request):
     due_subscribers = CustomUser.objects.filter(
                                     date_subscribed__range=[end_date, start_date]
                                     ).values_list('email', flat=True)
-    print(due_subscribers)
 
     content =  {
         'due_subscribers' : "kelvin not noon"       
