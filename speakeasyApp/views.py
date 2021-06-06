@@ -284,11 +284,10 @@ def Api_Cancel(request):
             msg.content_subtype = "html"
             msg.send(fail_silently=False)
             return Response({
-                            'is_subscription_active': False,
-                            "subscription_type": user.subscription_type,
-                            'status': status.HTTP_200_OK
-
-                            })
+                        'is_subscription_active': False,
+                        "subscription_type": user.subscription_type,
+                        'status': status.HTTP_200_OK
+                        })
     except:
         message = {
             "message" : " subscription does not exist!"
