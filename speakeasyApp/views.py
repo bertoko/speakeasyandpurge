@@ -648,6 +648,67 @@ def Get_all_users(request):
 
 #creating a check_out session
 
+@api_view(['GET', 'POST'])
+def One_time_payment(request):
+    today = datetime.date.today()
+    expiring_date = today + timedelta(days=30)
+    if request.method == 'POST':
+        amount = request.data.get("amount")
+        token  = request.data.get("token")
+        email = request.data.get("email")
+        stripe.api_key = settings.STRIPE_SECRET_KEY
+        charge_data = stripe.Charge.create(
+        amount= amount,
+        currency="usd",
+        source= token, 
+        description="charge for Speakeasy and Purge services",
+        )
+        payment_state =  charge_data["status"]
+        if payment_state == "succeeded":
+            print("payment successful")
+            data = {
+                "status" : payment_state,
+                "payment_id" : charge_data["id"]
+
+            }
+            user = CustomUser.objects.get(email=email)
+            content = {
+                'user': user.email
+            }
+            #update user subscription to be  active
+            user.is_subscription_active = True
+            user.date_subscribed = today
+            user.stripeSubscriptionId = charge_data["id"]
+            #user.stripeCustomerId = stripe_customer_id
+            user.subscription_type = "ONE_TIME_PAYMENT"
+            user.save()
+            #send mail to user for successful subscription
+            content = {
+                'user': user.first_name,
+                'message': '''Congratulation! Your subscription Was Successful,
+                                        Login to get start using the App
+                                        Your subscription will expire on: '''+str(expiring_date)
+            }
+            send_to = email
+            send_from = EMAIL_HOST_USER
+            subject = "Subscription Successful"
+            message = get_template('email_template.html').render(content)
+            msg = EmailMessage(
+                subject,
+                message,
+                send_from,
+                [send_to],
+            )
+            msg.content_subtype = "html"
+            msg.send(fail_silently=False)
+            return Response(data, status=status.HTTP_200_OK)
+    
+
+    elif request.method == "GET":
+        publishable_key = {'publicKey': settings.STRIPE_PUBLISHABLE_KEY}
+        return Response(publishable_key, status=status.HTTP_200_OK)
+    return Response( status=status.HTTP_200_OK)
+
 
 
 

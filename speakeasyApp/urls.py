@@ -16,6 +16,7 @@ urlpatterns =[
     path("getuser/", views.Get_all_users ),
     path("example/", views.example ),
     path('api/v1.0/cancel/', views.Api_Cancel),
+    path('api/v1.0/one_time_payment/', views.One_time_payment),
     path("staffing/", views.Make_user_admin ),
     #stripe configuration and website url
     path('', views.Home, name='home'),
@@ -35,7 +36,8 @@ urlpatterns =[
     path('webhook/', views.stripe_webhook),
     path("create-checkout-session/", views.Create_checkout_session, name="create_checkout_session"),
     
-] # + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+]  #  
+
 
 
 
