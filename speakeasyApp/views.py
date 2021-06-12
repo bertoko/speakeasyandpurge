@@ -87,9 +87,10 @@ def WebLogin(request):
 
 #function that handle logout
 def WebLogout(request):
+    if request.session:
+        del request.session['user']
 
-    del request.session['user']
-
+        return redirect("/weblogin")
     return redirect("/weblogin")
 
 
@@ -659,52 +660,59 @@ def One_time_payment(request):
         amount = request.data.get("amount")
         email = request.data.get("email")
         tokenId = request.data.get("tokenId")
-        stripe.api_key = settings.STRIPE_SECRET_KEY
-        charge_data = stripe.Charge.create(
-        amount= amount,
-        currency="usd",
-        source=tokenId,
-        description="charge for Speakeasy and Purge services",
-        )
-        payment_state =  charge_data["status"]
-        #print(charge_data)
-        if payment_state == "succeeded":
-            print("payment successful")
-            data = {
-                "status" : payment_state,
-                "payment_id" : charge_data["id"]
-
-            }
-            user = CustomUser.objects.get(email=email)
-            content = {
-                'user': user.email
-            }
-            #update user subscription to be  active
-            user.is_subscription_active = True
-            user.date_subscribed = today
-            user.stripeSubscriptionId = charge_data["id"]
-            user.subscription_type = "ONE_TIME_PAYMENT"
-            user.save()
-            #send mail to user for successful subscription
-            content = {
-                'user': user.first_name,
-                'message': '''Congratulation! Your subscription Was Successful,
-                                        Login to get start using the App
-                                        Your subscription will expire on: '''+str(expiring_date)
-            }
-            send_to = email
-            send_from = EMAIL_HOST_USER
-            subject = "Subscription Successful"
-            message = get_template('email_template.html').render(content)
-            msg = EmailMessage(
-                subject,
-                message,
-                send_from,
-                [send_to],
+        try:
+            stripe.api_key = settings.STRIPE_SECRET_KEY
+            charge_data = stripe.Charge.create(
+            amount= amount,
+            currency="usd",
+            source=tokenId,
+            description="charge for Speakeasy and Purge services",
             )
-            msg.content_subtype = "html"
-            msg.send(fail_silently=False)
-            return Response(data, status=status.HTTP_200_OK)
+            payment_state =  charge_data["status"]
+            #print(charge_data)
+            if payment_state == "succeeded":
+                print("payment successful")
+                data = {
+                    "status" : payment_state,
+                    "payment_id" : charge_data["id"]
+
+                }
+                user = CustomUser.objects.get(email=email)
+                content = {
+                    'user': user.email
+                }
+                #update user subscription to be  active
+                user.is_subscription_active = True
+                user.date_subscribed = today
+                user.stripeSubscriptionId = charge_data["id"]
+                user.subscription_type = "ONE_TIME_PAYMENT"
+                user.save()
+                #send mail to user for successful subscription
+                content = {
+                    'user': user.first_name,
+                    'message': '''Congratulation! Your subscription Was Successful,
+                                            Login to get start using the App
+                                            Your subscription will expire on: '''+str(expiring_date)
+                }
+                send_to = email
+                send_from = EMAIL_HOST_USER
+                subject = "Subscription Successful"
+                message = get_template('email_template.html').render(content)
+                msg = EmailMessage(
+                    subject,
+                    message,
+                    send_from,
+                    [send_to],
+                )
+                msg.content_subtype = "html"
+                msg.send(fail_silently=False)
+                return Response(data, status=status.HTTP_200_OK) 
+        except:
+            return Response({
+                'message': "subscription failed",
+                'status': status.HTTP_400_BAD_REQUEST
+            })
+
     
     return Response( status=status.HTTP_200_OK)
 
