@@ -624,7 +624,9 @@ def Check_due_subscribers(request):
     
 
 #For Admin to make user staff for ADMIN only
+
 @api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
 def Make_user_admin(request):
     if request.method == "POST":
         email = request.data.get('email')
@@ -649,21 +651,23 @@ def Get_all_users(request):
 #creating a check_out session
 
 @api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
 def One_time_payment(request):
     today = datetime.date.today()
     expiring_date = today + timedelta(days=30)
     if request.method == 'POST':
         amount = request.data.get("amount")
-        token  = request.data.get("token")
         email = request.data.get("email")
+        tokenId = request.data.get("tokenId")
         stripe.api_key = settings.STRIPE_SECRET_KEY
         charge_data = stripe.Charge.create(
         amount= amount,
         currency="usd",
-        source= token, 
+        source=tokenId,
         description="charge for Speakeasy and Purge services",
         )
         payment_state =  charge_data["status"]
+        #print(charge_data)
         if payment_state == "succeeded":
             print("payment successful")
             data = {
@@ -679,7 +683,6 @@ def One_time_payment(request):
             user.is_subscription_active = True
             user.date_subscribed = today
             user.stripeSubscriptionId = charge_data["id"]
-            #user.stripeCustomerId = stripe_customer_id
             user.subscription_type = "ONE_TIME_PAYMENT"
             user.save()
             #send mail to user for successful subscription
@@ -703,10 +706,6 @@ def One_time_payment(request):
             msg.send(fail_silently=False)
             return Response(data, status=status.HTTP_200_OK)
     
-
-    elif request.method == "GET":
-        publishable_key = {'publicKey': settings.STRIPE_PUBLISHABLE_KEY}
-        return Response(publishable_key, status=status.HTTP_200_OK)
     return Response( status=status.HTTP_200_OK)
 
 
@@ -749,7 +748,7 @@ def Check_due_subscribed_users():
     ).values_list('email', flat=True)
     if due_subscribers:
         content = {
-            'due_subscribers': "kelvin not noon"
+            'due_subscribers': "kelvin not soon"
         }
 
         content = {
