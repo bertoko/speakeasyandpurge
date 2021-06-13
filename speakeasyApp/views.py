@@ -251,30 +251,33 @@ def cancel(request):
     return render(request, 'cancel.html')
 
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def Api_Cancel(request):
     stripe.api_key = settings.STRIPE_SECRET_KEY
     email = request.data.get('email')
+
     user = CustomUser.objects.get(email=email)
     subscription_id = user.stripeSubscriptionId
     #data = stripe.Subscription.retrieve(subscription_id)
     #is_subscription_active = data['plan']['active']
-    try:
-        data = stripe.Subscription.delete(subscription_id)
-        status =  data["status"]
-        if status == "cancel":
+    print(user.subscription_type, user.is_subscription_active)
+    if (user.subscription_type  == "SUBSCRIPTION"):
+        try:
+            stripe.Subscription.modify(subscription_id)
             user.is_subscription_active = False
             user.save()
-            print("unsubscribe successful")
+            print("Unsubscribe Successful")
             #send mail to user for successful subscription
             content = {
                 'user': user.first_name,
-                'message': '''You have Successfully Unsubscribe for Speakeasy 
+                'message': '''You have Unsubscribe for Speakeasy 
                                         and Purge Service 
-                                        Kindly hit on Subcribe to get started Again'''
+                                        You will not be able to access the services
+                                        when due'''
             }
             send_to = email
             send_from = EMAIL_HOST_USER
-            subject = "Subscription Successful"
+            subject = "Unsubscription Successful"
             message = get_template('email_template.html').render(content)
             msg = EmailMessage(
                 subject,
@@ -285,17 +288,25 @@ def Api_Cancel(request):
             msg.content_subtype = "html"
             msg.send(fail_silently=False)
             return Response({
+                        'message': "Unsubscription Successful",
                         'is_subscription_active': False,
                         "subscription_type": user.subscription_type,
                         'status': status.HTTP_200_OK
                         })
-    except:
+        except:
+            message = {
+                "message" : " subscription does not exist!"
+            }
+            return Response(message, status=status.HTTP_200_OK) 
+        
+    else:
         message = {
-            "message" : " subscription does not exist!"
-        }
+                "message" : " subscription does not exist !"
+            }
         return Response(message, status=status.HTTP_200_OK)
 
-    return HttpResponse(status=200)
+
+    
 
 
 #stripe Webhook that handle subscription
@@ -307,18 +318,16 @@ def stripe_webhook(request):
     out_put = json.loads(payload)
     email = out_put["data"]["object"]['customer_email']
     session = out_put['data']['object']
-    client_reference_id = session.get('client_reference_id')
+
     stripe_customer_id = session.get('customer')
     stripe_subscription_id = session.get('subscription')
-    print(client_reference_id,"client reference")
-    print(stripe_customer_id, " stripe   customernid")
-    print(stripe_subscription_id, " stripe subscriptiom id")
     if email:
         user = CustomUser.objects.get(email=email)
         content = {
             'user': user.email
         }
         #update user subscription to be  active
+        #sub_Jf86YVAwI1qApM
         user.is_subscription_active = True
         user.date_subscribed = today
         user.stripeSubscriptionId  = stripe_subscription_id
@@ -419,35 +428,19 @@ class C_Login(ObtainAuthToken):
             user = CustomUser.objects.get(email=email)
             if (user.email == email) and (user.pin == pin): 
                 token, created = Token.objects.get_or_create(user=user)
-                if user.subscription_type == "SUBSCRIPTION":
-                    try:
-                        data = stripe.Subscription.retrieve(user.stripeSubscriptionId)
-                        if data:
-                            active = data['plan']['active']
-                            is_subscription_active = str(active).capitalize()
-                            return Response({
-                            'token': token.key,
-                            'user_id': user.pk,
-                            'email': user.email,
-                            'name' : user.last_name + "  " + user.first_name,
-                            'is_subscription_active' : is_subscription_active,
-                            "subscription_type" : user.subscription_type,
-                            'message' : "Login Successful",
-                            'status' : status.HTTP_200_OK
-
-                        })
-                    except:
-                        return Response({
-                        'token': token.key,
-                        'email': user.email,
-                        'name' : user.last_name + " " + user.first_name,
-                        'is_subscription_active' : False,
-                        'message' : "subscription is due",
-                         "subscription_type" : user.subscription_type,
-                        'status' : status.HTTP_200_OK
-                       
+                if (user.subscription_type == "SUBSCRIPTION") and (user.is_subscription_active is True):
+                    return Response({
+                    'token': token.key,
+                    'user_id': user.pk,
+                    'email': user.email,
+                    'name' : user.last_name + "  " + user.first_name,
+                    'is_subscription_active' : user.is_subscription_active,
+                    "subscription_type" : user.subscription_type,
+                    'message' : "Login Successful",
+                    'status' : status.HTTP_200_OK
 
                     })
+
                 elif (user.date_subscribed == None) or (user.date_subscribed.strftime('%Y%m%d') < today.strftime('%Y%m%d')):
                     return Response({
                         'token': token.key,
@@ -550,7 +543,9 @@ def example(request, format=None):
 
 
 #funtion tha will handle subscription and creact charge
+
 @api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
 def Subscribe_user( request):
     #it will return Todays date
     today = datetime.date.today()
@@ -638,6 +633,9 @@ def Make_user_admin(request):
 
 #get all the users for Admin only
 #@permission_classes([IsAuthenticated])
+
+
+@permission_classes([IsAuthenticated])
 @api_view(['GET'])
 def Get_all_users(request):
 
@@ -672,15 +670,18 @@ def One_time_payment(request):
             #print(charge_data)
             if payment_state == "succeeded":
                 print("payment successful")
-                data = {
-                    "status" : payment_state,
-                    "payment_id" : charge_data["id"]
-
-                }
                 user = CustomUser.objects.get(email=email)
                 content = {
                     'user': user.email
                 }
+                data = {
+                    "status" : payment_state,
+                    "payment_id" : charge_data["id"],
+                    "is_subscription_active": True,
+                    "subscription_type": "SUBSCRIPTION",
+                    "email" : user.email
+                }
+
                 #update user subscription to be  active
                 user.is_subscription_active = True
                 user.date_subscribed = today
