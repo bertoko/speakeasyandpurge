@@ -322,14 +322,14 @@ section{
                           </div>
                         </li>
                         
-                        {% if is_staff %}
-                        <li class="nav-item"><a class="nav-link"  href="{% url 'postvideo'  %}">  POST VIDEO </a></li>
+                      
+                       
+                        {% if first_name  %}
+                         <li class="nav-item"><a class="nav-link"  href="{% url 'postvideo'  %}">  POST VIDEO </a></li>
                         <li class="nav-item"><a class="nav-link" href="{% url 'postarticle'  %}"> POST ARTICLES </a></li>
-                        <li class="nav-item"><a class="nav-link"  id="submitBtn">  MAKE PAYMENT </a></li>
+                         <li class="nav-item"><a class="nav-link"  id="submitBtn">  MAKE PAYMENT </a></li>
                         <li class="nav-item"><a class="nav-link" href="{% url 'weblogout'  %}"> Logout </a></li>
-                        {% elif first_name  %}
-                        <li class="nav-item"><a class="nav-link" href="{% url 'weblogout'  %}"> Logout </a></li>
-                        <li class="nav-item"><a class="nav-link"  id="submitBtn">  MAKE PAYMENT </a></li>
+                       
                         {% else %}
 
                         <li class="nav-item"><a class="nav-link" href="{% url 'weblogin' %}"> Login </a></li>
@@ -441,7 +441,8 @@ section{
                           </div>
 
                           <div class="col">
-                            <img  class="funnel-img" src="static/img/funnel.JPG" alt="Girl in a jacket">
+                         <a href="{% url 'funnel'  %}"> 
+                            <img  class="funnel-img" src="static/img/funnel.JPG" alt="Girl in a jacket"> </a>
 
                           
                         </div>

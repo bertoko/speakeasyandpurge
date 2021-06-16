@@ -260,7 +260,7 @@ def Api_Cancel(request):
     subscription_id = user.stripeSubscriptionId
     #data = stripe.Subscription.retrieve(subscription_id)
     #is_subscription_active = data['plan']['active']
-    print(user.subscription_type, user.is_subscription_active)
+
     if (user.subscription_type  == "SUBSCRIPTION"):
         try:
             stripe.Subscription.modify(subscription_id)
@@ -482,7 +482,6 @@ class C_Login(ObtainAuthToken):
 
 
 
-
 #the function that will handle user registration for API
 @api_view(["POST"])
 def RegisterUser(request):
@@ -523,9 +522,6 @@ def RegisterUser(request):
             return Response(register.data, status= status.HTTP_200_OK)
     return Response(register.errors, status= status.HTTP_400_BAD_REQUEST)
 
-
-
-
 class HelloView(APIView):
     permission_classes = (IsAuthenticated,)  
     def get(self, request):
@@ -541,9 +537,7 @@ def example(request, format=None):
     }
     return Response(content)
 
-
 #funtion tha will handle subscription and creact charge
-
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
 def Subscribe_user( request):
@@ -632,13 +626,9 @@ def Make_user_admin(request):
     return Response(status=status.HTTP_200_OK)
 
 #get all the users for Admin only
-#@permission_classes([IsAuthenticated])
-
-
-@permission_classes([IsAuthenticated])
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def Get_all_users(request):
-
     if request.method == "GET":
         users = CustomUser.objects.all()
 
@@ -648,7 +638,6 @@ def Get_all_users(request):
 
 
 #creating a check_out session
-
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
 def One_time_payment(request):
@@ -719,7 +708,15 @@ def One_time_payment(request):
 
 
 
-
+#diplay Video for API
+@api_view(['GET'])
+def  Delete_video(request):
+    if request.method == "GET":
+        video = Video.objects.all()
+        video.delete()
+        videos = VideoSerializer(video, many=True)
+        return Response(videos.data, status= status.HTTP_200_OK)
+    return Response(videos.errors, status= status.HTTP_400_BAD_REQUEST)
 
 '''
 
