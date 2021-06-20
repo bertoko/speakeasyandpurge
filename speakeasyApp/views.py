@@ -42,13 +42,14 @@ def Home(request):
     if "user" in request.session:
         user = request.session["user"]
         first_name = user.get("first_name")
+
         context =  {
             "first_name" : first_name,
             "is_staff" : user["is_staff"]
         }
-        return render(request, "home.html", context= context)
-    
-    return render(request, "home.html")
+        return render(request, "home.html", {"first_name": first_name})
+    else:
+        return render(request, "home.html")
 
 ############################################################
 #funtion that handle login on web
@@ -129,8 +130,7 @@ def Post_video(request):
         video = VideoForm(request.POST, request.FILES)
         if video.is_valid():
             video.save()
-        return render(request, 'post_video.html')
-
+            return redirect('/showvideo')
     return render(request, 'post_video.html')
 
 #Post_video   Post_article
@@ -139,38 +139,69 @@ def Display_video(request):
     context = {
         'video': video,
     }
-
     return render(request, 'show_video.html', {"video" : video})
 
+def  Delete_video(request, id):
+    video_method = Video.objects.get(id=id)
+    data = video_method.video.delete()
+    if data is None:
+        return redirect('/showvideo')
+    return render(request, 'show_video.html')
+
+
+
 def Post_article(request):
-
     if request.method == 'POST':
-
         title = request.POST['title']
         content = request.POST['content']
-
         data = Article(title=title, content=content)
         data.save()
-        return redirect('home')
-
+        return redirect('/showarticle')
     return render(request, 'post_article.html')
 
 
 def Display_article(request):
-
-
     posts = Article.objects.all()
     context = {
         'articles': posts,
     }
-
     return render(request, 'show_article.html', context)
+
+
+def Delete_article(request, id):
+    article = Article.objects.filter(id=id)
+    article.delete()
+    return render(request,'show_article.html')
+
+def Edith_article(request, id ):
+    qry = Article.objects.get(id=id)
+    print(qry.content ," and" , qry.title)
+    return render(request, "edith_article.html",{"title":qry.title, "content":qry.content}) 
+
+
+
+def Update_article(request, id):    
+    qry = Article.objects.get(id=id)
+    if request.method == "POST":
+        title = request.POST['title']
+        content = request.POST['content']
+        qry.title = title
+        qry.content = content
+        qry.save()
+        posts = Article.objects.all()
+        context = {
+            'articles': posts,
+        }
+    return render(request, 'show_article.html' , context )
+
 
 def Saving(request):
     return render(request, 'saving.html')
 
+
 def Funnel(request):
     return render(request, 'funnel.html')
+
 
 def WebRetrieve_pin(request):
     if request.method == "POST":
@@ -459,7 +490,7 @@ class C_Login(ObtainAuthToken):
                         'token': token.key,
                         'user_id': user.pk,
                         'email': user.email,
-                        'name' : user.last_name + "  " + user.first_name,
+                        'name' : user.last_name +"  " + user.first_name,
                         'is_subscription_active' : user.is_subscription_active,
                          "subscription_type" : user.subscription_type,
                         'message' : "Login Successful",
@@ -710,9 +741,9 @@ def One_time_payment(request):
 
 #diplay Video for API
 @api_view(['GET'])
-def  Delete_video(request):
+def  Delete_video(request, id):
     if request.method == "GET":
-        video = Video.objects.all()
+        video = Video.objects.filter(id=id)
         video.delete()
         videos = VideoSerializer(video, many=True)
         return Response(videos.data, status= status.HTTP_200_OK)

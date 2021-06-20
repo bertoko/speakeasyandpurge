@@ -14,7 +14,7 @@ urlpatterns =[
     path('api/v1.0/video/', views.Show_video, name="video"),
     path('api/v1.0/article/', views.Show_article, name="article"),
     path("getuser/", views.Get_all_users ),
-    path("example/", views.Delete_video),
+    path("example/<int:id>/", views.Delete_video),
     path('api/v1.0/cancel/', views.Api_Cancel),
     path('api/v1.0/one_time_payment/', views.One_time_payment),
     path("staffing/", views.Make_user_admin ),
@@ -22,12 +22,16 @@ urlpatterns =[
     path('', views.Home, name='home'),
     path("webregister/", views.WebRegister, name='webregister' ),
     path("weblogin/", views.WebLogin, name='weblogin'),  
-    path("weblogout/", views.WebLogout, name='weblogout'),  #
+    path("weblogout/", views.WebLogout, name='weblogout'),  
     path("postvideo/", views.Post_video, name='postvideo'),
     path("postarticle/", views.Post_article, name='postarticle'), 
-    path("showarticle/", views.Display_article, name='showarticle'), #
-    path("showvideo/", views.Display_video, name='showvideo'), #
+    path("showarticle/", views.Display_article, name='showarticle'), 
+    path("showvideo/", views.Display_video, name='showvideo'), 
     path('retreivepin/', views.WebRetrieve_pin, name="retreivepin"),
+    path('edith/<int:id>/', views.Edith_article, name="Edith_article"),
+    path('edith/<int:id>/update/', views.Update_article, name="Update_article"),
+    path('deletearticle/<int:id>/', views.Delete_article, name="Delete_article"),
+    path('deletevideo/<int:id>/', views.Delete_video, name="Delete_video"),
     path('saving/', views.Saving, name="saving"),
     path('funnel/', views.Funnel, name="funnel"),
     path('payment/', views.Stripe_config_pay),

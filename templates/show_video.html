@@ -11,6 +11,7 @@
 <source src="{{video.video.url}}" type="video/mp4">
 <b>{{video.title}}</b>
 </video>
+<a class="" href='{% url "Delete_video" video.id %}'> <i class="fa fa-trash"></i></a>
 {% endfor %}
  
 </div>

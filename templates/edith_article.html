@@ -1,25 +1,29 @@
 {% extends "home.html" %}
 {% block content %}
 <section class="text-center login-page">
-    <form class="myform  text-center" action="" method="POST">
+    <form class="myform  text-center" action="update/" method="POST">
         <div class="container">
             <div class="row">
+            {% if title %}
                 <div class="col">
-                <input type="text" id="tittle" class="text-center" name="title" required  placeholder="Enter Tittle">
+                <input type="text" id="tittle" class="text-center" name="title" required  value="{{title}}" placeholder="Enter Tittle">
                 </div>
+                {% endif %}
             </div>
         </div>
         <div class="container">
             <div class="row">
+             {% if content %}
                 <div class="col"> 
   
-                    <textarea type="textarea" class="text-center" id="content" name="content" placeholder="Enetr Content"></textarea>
+                    <input type="textarea" class="text-center" id="content" name="content" value="{{content}}">
                 </div>
+                {% endif %}
             </div>
         </div>
         
         <div class="container">
-            <button type="submit" class="btn btn-default"> Post Article </button>
+            <button type="submit" class="btn btn-default"> Update </button>
             
         </div>
         {% csrf_token %}

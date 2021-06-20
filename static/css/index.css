@@ -1,152 +1,26 @@
-footer{
-
-     margin-top: 150px;
-     height: 100px;
-     text-align: center;
-
-    
-}
-
-
-.fa{
-    padding: 15px;
-}
-
-.ref-2{
-    width: 300px
-}
-
-.navbar{
-      background:#739DF3;
-}
-.mydata{
-    display: flex;
-    flex-direction: column;
-    text-align: center;
-    align-items: center;
-    
-}
-.form{
-    display: flex;
-flex-direction: column;
-margin-top: 15px;
-margin-bottom: 15px;
-text-align: center
-}
-
-@media(max-width:700px){
-  input[type="text"],button[type="submit"],input[type="pin"], 
-  .select[type="text"] , input[type="password"] , .btn{
-  margin:1px ;
-  width: 90%;
-  height: 60%;
-  padding: 1px;
-  border-radius: 40px;
-  outline: none;
-  margin-top: 40px;
-  
-  }
-}
-
-input[type="text"],input[type="password"],
- input[type="email"], input[type="pin" ],
- button[type="submit"], select[type="select"],
- textarea[type="textarea"], .btn{
-
-     margin:1px ;
-  width: 90%;
-  height: 60%;
-  padding: 1px;
-  border-radius: 40px;
-  outline: none;
-  margin-top: 40px;
-}
-
-@media(max-width:700px){
-  input[type="text"],button[type="submit"],input[type="file"], 
-  textarea[type="textarea"] , input[type="password"]{
-  margin:1px ;
-  width: 90%;
-  height: 60%;
-  padding: 1px;
-  outline: none;
-    margin-top: 40px;
-  
-  
-  }
-}
-.btn{
-    width: 150px
-}
-
-th{
-    
-    background: #739DF3;
-}
-
-
-th,td{
-    width: 150px;
-    height: 20px;
-    border: 1px solid black;
-}
-
-
-.anger-content{
-    margin-top: 20px;
-}
-
-
-
-    body {background-color: #816E55;}
+    .body {background-color: #816E55;}
     .speakeasy-and-purge{
       margin-top: 60px;
-      background-color :#7B684E
-    }
-    .speakeasy-and-purge-caption{
-        
-
-    }
-    .living{
-      background:#B5B4AC;
-      width :1000px;
-      height : 200px;
-      text-align: center;
-    }
-    p,  h4, h1{
-      color : white
+      
+      width: 100%
     }
 
-
-.speak-img{
-width : 1000px;
-height : 600px
-      }
-
-
-
-@media(min-width:700px){
-.speak-img{
-width : 100px;
-height : 200px
-      }
-  
-  }
-  
-@media(max-width:702px){
-.yugo-img, .funnel-img{
-width : 500px;
-height : 400px
-    }
-
-}
-
-  
-body {background-color: #816E55;}
-    .speakeasy-and-purge{
+     @media(min-width:700px){
+     .speakeasy-and-purge{
       margin-top: 60px;
-      background-color :#7B684E;
+      width: 1200px;
     }
+
+   
+ }
+    @media(max-width:700px){
+     .speakeasy-and-purge{
+      margin-top: 60px;
+      width: 320px;
+    }
+
+   
+ }
     .social-media{
       margin-top: 50px;
       margin-bottom : 10px;
@@ -160,8 +34,7 @@ body {background-color: #816E55;}
       margin-top:100px;
     }
 
-    .fab{
-  
+  .fab{
   padding: 8px;
   margin-right: 8px;
   width: 30px;
@@ -171,22 +44,27 @@ body {background-color: #816E55;}
   color: white;
   
 }
-  .living{
+ @media(max-width:700px){
+     .living{
+    background:#B5B4AC;
+    width :300px;
+    height : 200px;
+    text-align: center;
+    margin : 20px;
+  }
+   
+ }
+ 
+    @media(min-width:701px){
+    .living{
     background:#B5B4AC;
     width :1000px;
     height : 200px;
     text-align: center;
-  }
-      @media(max-width:700px){
-    .living{
-      background:#B5B4AC;
-    width :400px;
-    height : 200px;
-    text-align: center;
+     margin : 20px;
           }
       
       }
-
     p,  h4, h1{
       color : white
     }
@@ -205,47 +83,40 @@ body {background-color: #816E55;}
         
       }
 
-      .speak-img{
-        width : 1000px;
-         height : 600px;
+@media(min-width:700px){
+.speak-img{
+width : 1000px;
+height : 400px
       }
-      @media(max-width:700px){
-      .speak-img{
-      width : 200px;
-      height : 200px
-            }
-        
-        }
+  
+  }
 @media(max-width:700px){
 .speak-img{
-width : 200px;
-height : 200px
+width : 300px;
+height : 200px;
     }
 
 }
 @media(max-width:702px){
 .yugo-img, .funnel-img{
-width : 300px;
-height : 400px
+width : 290px;
+height : 400px;
+margin-left : 5px
     }
 
 }
 @media(min-width:700px){
 .yugo-img, .funnel-img{
 width : 500px;
-height : 400px
+height : 400px;
     }
 
 }
 
 .btn{
   background : #F6F6F6;
-  color :#816E55
+  color :#816E55;
 }
-
-
-
-
 
 .btn-member{
   background : #816E55;
@@ -275,7 +146,10 @@ height : 400px
 }
 }
 
+.anger-content{
+    margin-top: 50px;
 
+}
 
 .free-from-beast{
   margin-top: 30px;
@@ -292,16 +166,22 @@ height : 400px
   background: #fff;
   color : #816E55
 }
+input[type="file"] {
+    background: #fff;
+    padding: 6px 12px;
+    cursor: pointer;
+}
 
 @media(max-width:700px){
   input[type="text"],button[type="submit"],input[type="file"], 
   textarea[type="textarea"] , input[type="password"]{
   margin:1px ;
-  width: 90%;
+  width:100% ;
   height: 60%;
   padding: 1px;
   outline: none;
-    margin-top: 40px;
+  margin-top: 40px;
+  border-radius: 25px;
   
   
   }
@@ -320,10 +200,10 @@ height : 400px
   }
 }
 @media(min-width:700px){
-  textarea[type="textarea"]{
+  input[type="textarea"]{
   margin:5px ;
   width: 90%;
-  height: 100%;
+  height: 200px;
   padding: 1px;
   outline: none;
     margin-top: 40px;
@@ -341,7 +221,9 @@ height : 400px
   height: 60%;
   padding: 1px;
   outline: none;
-    margin-top: 40px;
+  margin-top: 40px;
+  border-radius: 25px;
+
   
   
   }
@@ -353,8 +235,22 @@ section{
   margin-top: 50px;
   margin-bottom: 50px;
 }
-.card {
+.card,social-media{
         margin: 0 auto; 
         float: none; 
         margin-bottom: 10px; 
+}
+.video{
+  max-width:200px;
+   max-height:200px
+}
+
+
+@media(min-width:700px){
+  .card{
+  
+    width : 600px
+  
+  
+  }
 }
