@@ -3,10 +3,6 @@ from django.contrib.auth.models import  AbstractUser, User
 
 #from fileservice.formatChecker import ContentTypeRestrictedFileField
 
-import os
-from django.db.models.signals import post_delete
-from django.dispatch import receiver
-
 
 # Create your models here
 
@@ -36,14 +32,6 @@ class Video(models.Model):
 
     def __str__(self):
         return self.title
-
-
-    def delete_completely(self, request, queryset):
-        for filemodel in queryset:
-            s3.delete_object(Bucket=BUCKET_NAME, Key=str(filemodel.file))
-            filemodel.delete()
-
-        delete_completely.short_description = 'Delete pointer and real file together'
 
 
 

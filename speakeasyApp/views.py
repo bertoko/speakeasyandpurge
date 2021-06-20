@@ -47,7 +47,7 @@ def Home(request):
             "first_name" : first_name,
             "is_staff" : user["is_staff"]
         }
-        return render(request, "home.html", {"first_name": first_name})
+        return render(request, "home.html", context)
     else:
         return render(request, "home.html")
 
