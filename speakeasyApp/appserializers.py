@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import CustomUser, Article, Video
+from .models import CustomUser, Article, Video, Newsletter_users
 #from models import Subscription, UserProfile from .appserializers import  UserSerializer
 
 class UserSerializer(serializers.ModelSerializer):
@@ -20,4 +20,11 @@ class ArticleSerializer(serializers.ModelSerializer):
 class VideoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Video
-        fields = ['id', 'title','video', ]  
+        fields = ['id', 'title','video', 'author' ]  
+
+
+class NewsletterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Newsletter_users
+        fields = ['id', 'name','email' ]  
+

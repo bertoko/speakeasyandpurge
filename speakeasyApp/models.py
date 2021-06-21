@@ -22,19 +22,12 @@ class Video(models.Model):
     video = models.FileField()
     date_posted = models.DateTimeField("date posted", null=True, auto_now_add=True)
 
-
-    
-
-
     class Meta:
         verbose_name = 'video'
         verbose_name_plural = 'videos'
 
     def __str__(self):
         return self.title
-
-
-
 
 class Article(models.Model):
     id = models.AutoField(primary_key=True)
@@ -43,3 +36,8 @@ class Article(models.Model):
     author = models.CharField(max_length=50)
     date_posted = models.DateTimeField("date posted", null=True, auto_now_add=True)
 
+class Newsletter_users(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=50)
+    email = models.EmailField("email", max_length=30, unique=True)
+    date_joined = models.DateTimeField("date posted", null=True, auto_now_add=True)

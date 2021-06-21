@@ -1,8 +1,11 @@
+from email import message
+import email
 from django.shortcuts import render,redirect
 from django.http.response import JsonResponse, HttpResponse 
 from rest_framework.response import Response
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view, permission_classes
+from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated  
 from rest_framework import status
@@ -30,7 +33,7 @@ from django.core.mail import send_mail
 import json
 # self define Module
 from .appserializers import UserSerializer, ArticleSerializer, VideoSerializer
-from .models import CustomUser, Video, Article
+from .models import CustomUser, Video, Article, Newsletter_users
 from .form import VideoForm
 from speakeasy.settings import EMAIL_HOST_USER
 from django.views.generic import TemplateView
@@ -51,6 +54,77 @@ def Home(request):
     else:
         return render(request, "home.html")
 
+
+def Webpost_video(request):
+    if request.method == 'POST':
+        video = VideoForm(request.POST, request.FILES)
+        if video.is_valid():
+            video.save()
+            return redirect('/showvideo')
+    return render(request, 'post_video.html')
+
+#Post_video   Post_article
+
+
+def Webdisplay_video(request):
+    video = Video.objects.all()
+    context = {
+        'video': video,
+    }
+    return render(request, 'show_video.html', {"video": video})
+
+
+def Webdelete_video(request, id):
+    video_method = Video.objects.get(id=id)
+    data = video_method.video.delete()
+    if data is None:
+        return redirect('/showvideo')
+    return render(request, 'show_video.html')
+
+
+def Webpost_article(request):
+    if request.method == 'POST':
+        title = request.POST['title']
+        content = request.POST['content']
+        data = Article(title=title, content=content)
+        data.save()
+        return redirect('/showarticle')
+    return render(request, 'post_article.html')
+
+
+def Webdisplay_article(request):
+    posts = Article.objects.all()
+    context = {
+        'articles': posts,
+    }
+    return render(request, 'show_article.html', context)
+
+
+def Webdelete_article(request, id):
+    article = Article.objects.filter(id=id)
+    article.delete()
+    return render(request, 'show_article.html')
+
+
+def Webedith_article(request, id):
+    qry = Article.objects.get(id=id)
+    print(qry.content, " and", qry.title)
+    return render(request, "edith_article.html", {"title": qry.title, "content": qry.content})
+
+
+def Webupdate_article(request, id):
+    qry = Article.objects.get(id=id)
+    if request.method == "POST":
+        title = request.POST['title']
+        content = request.POST['content']
+        qry.title = title
+        qry.content = content
+        qry.save()
+        posts = Article.objects.all()
+        context = {
+            'articles': posts,
+        }
+    return render(request, 'show_article.html', context)
 ############################################################
 #funtion that handle login on web
 ##############################################################
@@ -84,7 +158,6 @@ def WebLogin(request):
             
                  
     return render(request, "login.html")
-
 
 #function that handle logout
 def WebLogout(request):
@@ -125,74 +198,6 @@ def WebRegister(request):
     return render(request, "register.html", {})
 
 
-def Post_video(request):
-    if request.method == 'POST':
-        video = VideoForm(request.POST, request.FILES)
-        if video.is_valid():
-            video.save()
-            return redirect('/showvideo')
-    return render(request, 'post_video.html')
-
-#Post_video   Post_article
-def Display_video(request):
-    video = Video.objects.all()
-    context = {
-        'video': video,
-    }
-    return render(request, 'show_video.html', {"video" : video})
-
-def  Delete_video(request, id):
-    video_method = Video.objects.get(id=id)
-    data = video_method.video.delete()
-    if data is None:
-        return redirect('/showvideo')
-    return render(request, 'show_video.html')
-
-
-
-def Post_article(request):
-    if request.method == 'POST':
-        title = request.POST['title']
-        content = request.POST['content']
-        data = Article(title=title, content=content)
-        data.save()
-        return redirect('/showarticle')
-    return render(request, 'post_article.html')
-
-
-def Display_article(request):
-    posts = Article.objects.all()
-    context = {
-        'articles': posts,
-    }
-    return render(request, 'show_article.html', context)
-
-
-def Delete_article(request, id):
-    article = Article.objects.filter(id=id)
-    article.delete()
-    return render(request,'show_article.html')
-
-def Edith_article(request, id ):
-    qry = Article.objects.get(id=id)
-    print(qry.content ," and" , qry.title)
-    return render(request, "edith_article.html",{"title":qry.title, "content":qry.content}) 
-
-
-
-def Update_article(request, id):    
-    qry = Article.objects.get(id=id)
-    if request.method == "POST":
-        title = request.POST['title']
-        content = request.POST['content']
-        qry.title = title
-        qry.content = content
-        qry.save()
-        posts = Article.objects.all()
-        context = {
-            'articles': posts,
-        }
-    return render(request, 'show_article.html' , context )
 
 
 def Saving(request):
@@ -202,14 +207,13 @@ def Saving(request):
 def Funnel(request):
     return render(request, 'funnel.html')
 
-
 def WebRetrieve_pin(request):
     if request.method == "POST":
         email = request.POST.get("email")
         try:
             user = CustomUser.objects.get(email=email)
             content = {
-                'user': "KELVIN",
+                'user': user.first_name,
                 'message': 'Your pin has been retrieved successful, your pin is: '+ user.pin
             }
             send_to = user.email
@@ -389,13 +393,99 @@ def stripe_webhook(request):
     return HttpResponse(status=200)
 
 
-@api_view(['GET'])
-def Show_article(request):
+
+@api_view(['GET', 'POST'])
+def Newsletter(request):
+    if request.method == "POST":
+        subscribe_user = Newsletter_users()
+        subscribe_user.email = request.data.get('email')
+        subscribe_user.name = request.data.get('name')
+        subscribe_user.save()
+        data = {
+            "message" : "Successfully Added to Newsletter Subscribers"
+        }
+        return Response(data, status=status.HTTP_200_OK)
+    else:
+        return Response({"message" : "Not successful"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+def Get_newsletter_subscribers():
+    email = Newsletter_users.objects.all().values_list('email', flat=True)
+    return email
+
+@api_view(['GET', 'POST'])
+def Article_fun(request):
     if request.method == "GET":
         article = Article.objects.all()
         articles = ArticleSerializer(article, many=True)
         return Response(articles.data, status= status.HTTP_200_OK)
-    return Response(articles.errors, status= status.HTTP_400_BAD_REQUEST)
+    elif request.method == "POST":
+        article = ArticleSerializer(data=request.data)
+        if article.is_valid():
+            article.save()
+            email  = Get_newsletter_subscribers()
+            content = {
+                'message': request.data.get('content')
+                              
+            }
+            send_to = email
+            send_from = EMAIL_HOST_USER
+            subject = request.data.get('title')
+            message = get_template('email_template.html').render(content)
+            msg = EmailMessage(
+                subject,
+                message,
+                send_from,
+                [send_to],
+            )
+            msg.content_subtype = "html"
+            msg.send(fail_silently=False)
+            return Response(article.data, status=status.HTTP_200_OK)
+        return Response(article.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET', 'PUT', 'DELETE'])
+def Update_article(request, id):
+    if request.method == "GET":
+        try:
+            article = Article.objects.filter(id=id)
+            article = ArticleSerializer(article, many=True)
+            return Response(article.data, status= status.HTTP_200_OK)
+        except:
+            error= {
+                "message" : "Article does not exist"
+            }
+            return Response(error, status=status.HTTP_400_BAD_REQUEST)
+    elif request.method == "PUT":
+        try:
+            article = Article.objects.get(id=id)
+            title = request.data.get('title', article.title)
+            content = request.data.get('content', article.content)
+            article.title = title
+            article.content = content
+            article.save()
+            data = {
+                'message': "Updated successfully",
+            }
+            return Response(data, status=status.HTTP_200_OK)
+        except:
+            error = {
+                "message": "Article does not exist"
+            }
+            return Response(error, status=status.HTTP_400_BAD_REQUEST)
+    elif request.method == "DELETE":
+        try:
+            article = Article.objects.get(id=id)
+            article.delete()
+            data = {
+                'message': "Deleted successfully",
+            }
+            return Response(data, status=status.HTTP_200_OK)
+        except:
+            error = {
+                "message": "Article does not exist"
+            }
+            return Response(error, status=status.HTTP_400_BAD_REQUEST)
 
 #diplay Video for API
 @api_view(['GET'])
@@ -407,13 +497,40 @@ def  Show_video(request):
     return Response(videos.errors, status= status.HTTP_400_BAD_REQUEST)
 
 
+
+#delete Video for API
+@api_view(['DELETE'])
+def  Delete_video(request, id):
+    if request.method == "DELETE":
+        try:
+            video = Video.objects.filter(id=id)
+            video.delete()
+            videos = VideoSerializer(video, many=True)
+            return Response(videos.data, status= status.HTTP_200_OK)
+        except:
+            error = {
+                "message": "Article does not exist"
+            }
+            return Response(error, status=status.HTTP_400_BAD_REQUEST)
+
+#post video
+class Postvideo(APIView):
+    parser_classes = (MultiPartParser, FormParser)
+    def post(self, request, *args, **kwargs):
+        product = VideoSerializer(data=request.data)
+        if product.is_valid():
+            product.save()
+            return Response(product.data, status=status.HTTP_200_OK)
+        return Response(product.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
 #RETRIEVE PIN FOR API AND SEND IT VIA MAIL
 @api_view(['POST'])
 def Retrieve_pin(request):
     email = request.data.get('email')
     try:
         user = CustomUser.objects.get(email=email)
-        print(user.email)
         if user:
             content = {
             'user': user.first_name,
@@ -577,7 +694,6 @@ def Subscribe_user( request):
     twomorow = today - datetime.timedelta(days = 29 ) 
     start_date = today- timedelta(days=27)
     end_date = today - timedelta(days=30)
-    
     #it will give you 30 days interval
     expiring_date =  today + datetime.timedelta(days = 30 )
     if request.method == "POST":
@@ -739,15 +855,8 @@ def One_time_payment(request):
 
 
 
-#diplay Video for API
-@api_view(['GET'])
-def  Delete_video(request, id):
-    if request.method == "GET":
-        video = Video.objects.filter(id=id)
-        video.delete()
-        videos = VideoSerializer(video, many=True)
-        return Response(videos.data, status= status.HTTP_200_OK)
-    return Response(videos.errors, status= status.HTTP_400_BAD_REQUEST)
+
+    
 
 '''
 

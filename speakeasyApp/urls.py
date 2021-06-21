@@ -1,20 +1,19 @@
 from django.urls import path
-from rest_framework.authtoken.views import obtain_auth_token  
 from . import views
-from django.conf.urls.static import static
-from django.conf import settings
-from django.views.static import serve
-
 urlpatterns =[
-  #ApI URLs
+  #user api
     path("api/v1.0/register/", views.RegisterUser, name="RegisterUser"),
+    path("api/v1.0/get_all_user/", views.Get_all_users),
     path("api/v1.0/retrieve_pin/", views.Retrieve_pin, name="retrieve_pin"),
     path('api/v1.0/login/', views.C_Login.as_view()),
-    #path('api/v1.0/subscribe/', views.Subscribe_user, name="subscribe"),
-    path('api/v1.0/video/', views.Show_video, name="video"),
-    path('api/v1.0/article/', views.Show_article, name="article"),
-    path("getuser/", views.Get_all_users ),
-    path("example/<int:id>/", views.Delete_video),
+    #video api,
+    path('api/v1.0/showvideo/', views.Show_video, name="video"),
+    path("api/v1.0/delete_video/<int:id>/", views.Delete_video),
+    path("api/v0.1/postvideo/", views.Postvideo.as_view()),
+    #article api,
+    path('api/v1.0/article/', views.Article_fun, name="article"),
+    path("api/v1.0/update_article/<int:id>/", views.Update_article),#
+    path("api/v1.0/newsletter/", views.Newsletter),
     path('api/v1.0/cancel/', views.Api_Cancel),
     path('api/v1.0/one_time_payment/', views.One_time_payment),
     path("staffing/", views.Make_user_admin ),
@@ -23,15 +22,15 @@ urlpatterns =[
     path("webregister/", views.WebRegister, name='webregister' ),
     path("weblogin/", views.WebLogin, name='weblogin'),  
     path("weblogout/", views.WebLogout, name='weblogout'),  
-    path("postvideo/", views.Post_video, name='postvideo'),
-    path("postarticle/", views.Post_article, name='postarticle'), 
-    path("showarticle/", views.Display_article, name='showarticle'), 
-    path("showvideo/", views.Display_video, name='showvideo'), 
+    path("postvideo/", views.Webpost_video, name='postvideo'),
+    path("postarticle/", views.Webpost_article, name='postarticle'), 
+    path("showarticle/", views.Webdisplay_article, name='showarticle'), 
+    path("showvideo/", views.Webdisplay_video, name='showvideo'), 
     path('retreivepin/', views.WebRetrieve_pin, name="retreivepin"),
-    path('edith/<int:id>/', views.Edith_article, name="Edith_article"),
-    path('edith/<int:id>/update/', views.Update_article, name="Update_article"),
-    path('deletearticle/<int:id>/', views.Delete_article, name="Delete_article"),
-    path('deletevideo/<int:id>/', views.Delete_video, name="Delete_video"),
+    path('edith/<int:id>/', views.Webedith_article, name="Edith_article"),
+    path('edith/<int:id>/update/', views.Webupdate_article, name="Update_article"),
+    path('deletearticle/<int:id>/', views.Webdelete_article, name="Delete_article"),
+    path('deletevideo/<int:id>/', views.Webdelete_video, name="Delete_video"),
     path('saving/', views.Saving, name="saving"),
     path('funnel/', views.Funnel, name="funnel"),
     path('payment/', views.Stripe_config_pay),
@@ -40,7 +39,7 @@ urlpatterns =[
     path('webhook/', views.stripe_webhook),
     path("create-checkout-session/", views.Create_checkout_session, name="create_checkout_session"),
     
-]  #  
+]  
 
 
 
