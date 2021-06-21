@@ -301,18 +301,17 @@ def Api_Cancel(request):
             stripe.Subscription.modify(subscription_id)
             user.is_subscription_active = False
             user.save()
-            print("Unsubscribe Successful")
+
             #send mail to user for successful subscription
             content = {
                 'user': user.first_name,
                 'message': '''You have Unsubscribe for Speakeasy 
                                         and Purge Service 
-                                        You will not be able to access the services
-                                        when due'''
+                                        You will not be able to access some services'''
             }
             send_to = email
             send_from = EMAIL_HOST_USER
-            subject = "Unsubscription Successful"
+            subject = "Unsubscription"
             message = get_template('email_template.html').render(content)
             msg = EmailMessage(
                 subject,
@@ -373,10 +372,10 @@ def stripe_webhook(request):
         
         content = {
                 'user': user.first_name,
-                'message': '''Congratulation! Your subscription Was Successful,
-                                    Login to get start using the App
-                                    Your subscription will expire on: '''+str(expiring_date)
-                }
+                'message': '''Your subscription was successful.
+                                Login to get started using the app 
+                                Your subscription will expire on: '''+str(expiring_date)
+                } #
         send_to = email
         send_from = EMAIL_HOST_USER
         subject = "Subscription Successful"
@@ -709,10 +708,11 @@ def Subscribe_user( request):
         #send mail to user for successful subscription
         content = {
             'user': user.first_name,
-            'message' : '''Congratulation! Your subscription Was Successful,
-                                Login to get start using the App 
-                                Your will expire on: '''+str(expiring_date)
+            'message' : '''Your subscription was successful.
+                                Login to get started using the app 
+                                Your subscription will expire on: '''+str(expiring_date)
             }
+
         send_to = email
         send_from = EMAIL_HOST_USER
         subject = "Subscription Successful"
@@ -805,7 +805,6 @@ def One_time_payment(request):
             payment_state =  charge_data["status"]
             #print(charge_data)
             if payment_state == "succeeded":
-                print("payment successful")
                 user = CustomUser.objects.get(email=email)
                 content = {
                     'user': user.email
