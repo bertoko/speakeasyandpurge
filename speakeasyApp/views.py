@@ -341,8 +341,29 @@ def Api_Cancel(request):
 
 
     
-
-
+@api_view(['POST', 'GET'])
+def Create_checkout_session_api(request):
+    if request.method == 'GET':
+        domain_url ="https://speakeasyandpurge-eovuo.ondigitalocean.app/"
+        local_url = 'http://localhost:8000/'
+        stripe.api_key = settings.STRIPE_SECRET_KEY
+        try:
+            checkout_session = stripe.checkout.Session.create(
+                client_reference_id=request.user.id if request.user.is_authenticated else None,
+                success_url=domain_url+'success?session_id={CHECKOUT_SESSION_ID}',
+                cancel_url=domain_url+'cancel/',
+                payment_method_types=['card'],
+                mode='subscription',
+                line_items=[
+                    {
+                        'price': settings.STRIPE_PRICE_ID,
+                        'quantity': 1,
+                    }
+                ]
+            )
+            return Response({'sessionId': checkout_session['id']}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return JsonResponse({'error': str(e)})
 #stripe Webhook that handle subscription
 @csrf_exempt
 def stripe_webhook(request):
@@ -859,10 +880,56 @@ def One_time_payment(request):
 def Create_customer(request):
     email = request.data.get("email")
     stripe.api_key = settings.STRIPE_SECRET_KEY
-    data  = stripe.Customer.create(email=email)
-
-    return Response(data, status=status.HTTP_200_OK)
+    #data  = stripe.Customer.create(email=email)
+    '''
+    data = stripe.PaymentMethod.attach(
+        "pm_1J9QKOAdOeA3tjlC6JvxWsEn",
+        customer="cus_Jn0OjBptAMiXwX",
+    )
+    '''
+    #######################################################################
+    print(settings.STRIPE_PRICE_ID, "price id")
+    data = stripe.Subscription.create(
+        customer="cus_Jn0OjBptAMiXwX",  # cus_JmoHwApVi6SaNM
+    items=[
+        {"price": settings.STRIPE_PRICE_ID,}
+    ],
+    )
+    #############################################################
     
+
+    
+    ############################################################################
+    return Response(data, status=status.HTTP_200_OK)
+
+
+
+
+@api_view(['GET', 'POST'])
+def Attach_customer(request):
+  
+    data = stripe.PaymentMethod.attach(
+        "pm_1J9POjAdOeA3tjlCUhuPg2Cs",
+        customer="cus_JmojqQitjkqfgc",
+    )
+    
+    
+    data =  stripe.PaymentMethod.create(
+    type="card",
+    card={
+        "number": "4242424242424242",
+        "exp_month": 7,
+        "exp_year": 2022,
+        "cvc": "314",
+    },)
+    stripe.Subscription.create(
+        customer="cus_JmoHwApVi6SaNM",  # cus_JmoHwApVi6SaNM
+        items=[
+            {"price": settings.STRIPE_PRICE_ID, }
+        ],
+    )
+    return Response(data, status=status.HTTP_200_OK)
+
 
 '''
    data = stripe.PaymentMethod.attach(
@@ -870,12 +937,7 @@ def Create_customer(request):
         customer="cus_JmojqQitjkqfgc",
     )
 stripe.api_key = settings.STRIPE_SECRET_KEY
-    stripe.Subscription.create(
-        customer="cus_JmoHwApVi6SaNM", #cus_JmoHwApVi6SaNM
-    items=[
-        {"price": settings.STRIPE_PRICE_ID,}
-    ],
-    )
+    
 def run_continuously(interval=20):
     """Continuously run, while executing pending jobs at each
     elapsed time interval.
