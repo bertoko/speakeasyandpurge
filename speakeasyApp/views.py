@@ -855,10 +855,27 @@ def One_time_payment(request):
 
 
 
+@api_view(['GET', 'POST'])
+def Create_customer(request):
+    email = request.data.get("email")
+    stripe.api_key = settings.STRIPE_SECRET_KEY
+    data  = stripe.Customer.create(email=email)
+
+    return Response(data, status=status.HTTP_200_OK)
     
 
 '''
-
+   data = stripe.PaymentMethod.attach(
+        "pm_1J9CeyAdOeA3tjlCpUdMIvql",
+        customer="cus_JmojqQitjkqfgc",
+    )
+stripe.api_key = settings.STRIPE_SECRET_KEY
+    stripe.Subscription.create(
+        customer="cus_JmoHwApVi6SaNM", #cus_JmoHwApVi6SaNM
+    items=[
+        {"price": settings.STRIPE_PRICE_ID,}
+    ],
+    )
 def run_continuously(interval=20):
     """Continuously run, while executing pending jobs at each
     elapsed time interval.
