@@ -343,27 +343,53 @@ def Api_Cancel(request):
     
 @api_view(['POST', 'GET'])
 def Create_checkout_session_api(request):
-    if request.method == 'GET':
+    if request.method == 'POST':
         domain_url ="https://speakeasyandpurge-eovuo.ondigitalocean.app/"
         local_url = 'http://localhost:8000/'
         stripe.api_key = settings.STRIPE_SECRET_KEY
-        try:
-            checkout_session = stripe.checkout.Session.create(
-                client_reference_id=request.user.id if request.user.is_authenticated else None,
-                success_url=domain_url+'success?session_id={CHECKOUT_SESSION_ID}',
-                cancel_url=domain_url+'cancel/',
-                payment_method_types=['card'],
-                mode='subscription',
-                line_items=[
-                    {
-                        'price': settings.STRIPE_PRICE_ID,
-                        'quantity': 1,
-                    }
-                ]
-            )
-            return Response({'sessionId': checkout_session['id']}, status=status.HTTP_200_OK)
-        except Exception as e:
-            return JsonResponse({'error': str(e)})
+        payment_type = request.data.get("payment_type")
+        if payment_type == 'subscription' :
+            try:
+                checkout_session = stripe.checkout.Session.create(
+                    client_reference_id=request.user.id if request.user.is_authenticated else None,
+                    success_url=domain_url+'success?session_id={CHECKOUT_SESSION_ID}',
+                    cancel_url=domain_url+'cancel/',
+                    payment_method_types=['card'],
+                    mode='subscription',
+                    line_items=[
+                        {
+                            'price': settings.STRIPE_PRICE_ID,
+                            'quantity': 1,
+                        }
+                    ]
+                )
+                return Response({'sessionId': checkout_session['id']}, status=status.HTTP_200_OK)
+            except Exception as e:
+                return JsonResponse({'error': str(e)})
+        elif payment_type == 'payment' :
+            try:
+                checkout_session = stripe.checkout.Session.create(
+                    client_reference_id=request.user.id if request.user.is_authenticated else None,
+                    success_url=domain_url +
+                    'success?session_id={CHECKOUT_SESSION_ID}',
+                    cancel_url=domain_url+'cancel/',
+                    payment_method_types=['card'],
+                    mode='payment',
+                    line_items=[
+                        {
+                            'price': settings.STRIPE_ONE_TIME_PAYMENT_ID,
+                            'quantity': 1,
+                        }
+                    ]
+                )
+                return Response({'sessionId': checkout_session['id']}, status=status.HTTP_200_OK)
+            except Exception as e:
+                return JsonResponse({'error': str(e)})
+        else:
+            return Response({"message": "Wrong payment_type"}, status=status.HTTP_400_BAD_REQUEST)
+
+            
+
 #stripe Webhook that handle subscription
 @csrf_exempt
 def stripe_webhook(request):

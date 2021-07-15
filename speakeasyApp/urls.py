@@ -17,7 +17,8 @@ urlpatterns =[
     path('api/v1.0/cancel/', views.Api_Cancel),
     path('api/v1.0/one_time_payment/', views.One_time_payment),
     path("staffing/", views.Make_user_admin ), #
-    path("Create_checkout_session_api/", views.Create_checkout_session_api),  # Create_sub
+    path("api/v1.0/create_session_api/",
+         views.Create_checkout_session_api),  # Create_sub
     #stripe configuration and website url
     path('', views.Home, name='home'),
     path("webregister/", views.WebRegister, name='webregister' ),
