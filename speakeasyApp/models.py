@@ -10,8 +10,8 @@ class CustomUser(AbstractUser):
     email = models.EmailField("email", max_length=30,null=False, unique = True, )
     date_subscribed = models.DateField("date subscribed", null=True, auto_now_add=False)
     is_subscription_active = models.BooleanField("subscription_status" , default=False)
-    stripeCustomerId = models.CharField(max_length=255)
-    stripeSubscriptionId = models.CharField(max_length=255)
+    stripeCustomerId = models.CharField(max_length=255, null=True )
+    stripeSubscriptionId = models.CharField(max_length=255, null=True )
     subscription_type = models.CharField(max_length=255,null=True )
     pin = models.CharField("pin", null=False, max_length=6)
 

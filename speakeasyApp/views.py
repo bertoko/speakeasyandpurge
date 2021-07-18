@@ -259,10 +259,10 @@ def Create_checkout_session(request):
                 success_url=domain_url+'success?session_id={CHECKOUT_SESSION_ID}',
                 cancel_url=domain_url+'cancel/',
                 payment_method_types=['card'],
-                mode='subscription',
+                mode= 'subscription', #'payment'
                 line_items=[
                     {
-                        'price': settings.STRIPE_PRICE_ID,
+                        'price': settings.STRIPE_PRICE_ID,# #STRIPE_ONE_TIME_PAYMENT_ID, 
                         'quantity': 1,
                     }
                 ]
@@ -296,7 +296,7 @@ def Api_Cancel(request):
     #data = stripe.Subscription.retrieve(subscription_id)
     #is_subscription_active = data['plan']['active']
 
-    if (user.subscription_type  == "SUBSCRIPTION"):
+    if (user.subscription_type == "subscription"):
         try:
             stripe.Subscription.modify(subscription_id)
             user.is_subscription_active = False
@@ -355,7 +355,7 @@ def Create_checkout_session_api(request):
                     success_url=domain_url+'success?session_id={CHECKOUT_SESSION_ID}',
                     cancel_url=domain_url+'cancel/',
                     payment_method_types=['card'],
-                    mode='subscription',
+                    mode='subscription', 
                     line_items=[
                         {
                             'price': settings.STRIPE_PRICE_ID,
@@ -397,30 +397,27 @@ def stripe_webhook(request):
     expiring_date = today + timedelta(days=30)
     payload = request.body.decode('utf-8')
     out_put = json.loads(payload)
-    email = out_put["data"]["object"]['customer_email']
-    session = out_put['data']['object']
-
-    stripe_customer_id = session.get('customer')
-    stripe_subscription_id = session.get('subscription')
-    if email:
+    checkout_session = out_put['type']
+    if checkout_session == "checkout.session.completed":
+        email = out_put["data"]["object"]['customer_details']['email']
+        session = out_put['data']['object']
+        subscription_type = session['mode']
+        stripe_subscription_id = session.get('subscription', "")
+        stripe_customer_id = session.get('customer')
         user = CustomUser.objects.get(email=email)
-        content = {
-            'user': user.email
-        }
         #update user subscription to be  active
-        #sub_Jf86YVAwI1qApM
         user.is_subscription_active = True
         user.date_subscribed = today
         user.stripeSubscriptionId  = stripe_subscription_id
         user.stripeCustomerId = stripe_customer_id
-        user.subscription_type  = "SUBSCRIPTION"
+        user.subscription_type = subscription_type
         user.save()
         #send mail to user for successful subscription
-        
+        print("Subscription Successful")
         content = {
                 'user': user.first_name,
                 'message': '''Your subscription was successful.
-                                Login to get started using the app 
+                                Login to get started using the app. 
                                 Your subscription will expire on: '''+str(expiring_date)
                 } #
         send_to = email
@@ -435,7 +432,8 @@ def stripe_webhook(request):
         )
         msg.content_subtype = "html"
         msg.send(fail_silently=False)
-        return Response(content, status= status.HTTP_200_OK)
+        return Response(status= status.HTTP_200_OK)
+    
     return HttpResponse(status=200)
 
 
@@ -622,7 +620,7 @@ class C_Login(ObtainAuthToken):
             user = CustomUser.objects.get(email=email)
             if (user.email == email) and (user.pin == pin): 
                 token, created = Token.objects.get_or_create(user=user)
-                if (user.subscription_type == "SUBSCRIPTION") and (user.is_subscription_active is True):
+                if (user.subscription_type == "subscription") and (user.is_subscription_active is True):
                     return Response({
                     'token': token.key,
                     'user_id': user.pk,
@@ -902,59 +900,6 @@ def One_time_payment(request):
 
 
 
-@api_view(['GET', 'POST'])
-def Create_customer(request):
-    email = request.data.get("email")
-    stripe.api_key = settings.STRIPE_SECRET_KEY
-    #data  = stripe.Customer.create(email=email)
-    '''
-    data = stripe.PaymentMethod.attach(
-        "pm_1J9QKOAdOeA3tjlC6JvxWsEn",
-        customer="cus_Jn0OjBptAMiXwX",
-    )
-    '''
-    #######################################################################
-    print(settings.STRIPE_PRICE_ID, "price id")
-    data = stripe.Subscription.create(
-        customer="cus_Jn0OjBptAMiXwX",  # cus_JmoHwApVi6SaNM
-    items=[
-        {"price": settings.STRIPE_PRICE_ID,}
-    ],
-    )
-    #############################################################
-    
-
-    
-    ############################################################################
-    return Response(data, status=status.HTTP_200_OK)
-
-
-
-
-@api_view(['GET', 'POST'])
-def Attach_customer(request):
-  
-    data = stripe.PaymentMethod.attach(
-        "pm_1J9POjAdOeA3tjlCUhuPg2Cs",
-        customer="cus_JmojqQitjkqfgc",
-    )
-    
-    
-    data =  stripe.PaymentMethod.create(
-    type="card",
-    card={
-        "number": "4242424242424242",
-        "exp_month": 7,
-        "exp_year": 2022,
-        "cvc": "314",
-    },)
-    stripe.Subscription.create(
-        customer="cus_JmoHwApVi6SaNM",  # cus_JmoHwApVi6SaNM
-        items=[
-            {"price": settings.STRIPE_PRICE_ID, }
-        ],
-    )
-    return Response(data, status=status.HTTP_200_OK)
 
 
 '''
