@@ -393,17 +393,19 @@ def Create_checkout_session_api(request):
 #stripe Webhook that handle subscription
 @csrf_exempt
 def stripe_webhook(request):
+    event = None
     today = datetime.date.today()
     expiring_date = today + timedelta(days=30)
     payload = request.body.decode('utf-8')
     out_put = json.loads(payload)
     checkout_session = out_put['type']
+    event = out_put['data']['object']
+
     if checkout_session == "checkout.session.completed":
-        email = out_put["data"]["object"]['customer_details']['email']
-        session = out_put['data']['object']
-        subscription_type = session['mode']
-        stripe_subscription_id = session.get('subscription', "")
-        stripe_customer_id = session.get('customer')
+        email = event['customer_details']['email']
+        subscription_type = event['mode']
+        stripe_subscription_id = event.get('subscription', "")
+        stripe_customer_id = event.get('customer')
         user = CustomUser.objects.get(email=email)
         #update user subscription to be  active
         user.is_subscription_active = True
