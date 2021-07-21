@@ -468,7 +468,7 @@ def Get_newsletter_subscribers():
 
 
 
-def Add_user_to_mailing_list(email, name):
+def Add_user_to_mailing_list(email):
     api_key = settings.MAILCHIMP_API_KEY
     data_center = settings.MAILCHIMP_DATA_CENTER
     list_id = settings.MAILCHIMP_EMAIL_LIST_ID
@@ -480,11 +480,9 @@ def Add_user_to_mailing_list(email, name):
 
     member_info = {
         "email_address": email,
-        "first_name" : name,
         "status": "subscribed",
     }
     response = mailchimp.lists.add_list_member(list_id, member_info)
-    print(response)
 
     return response
 
@@ -494,8 +492,7 @@ def Add_user_to_mailing_list(email, name):
 def Newsletter_subscribers(request):
     if request.method == "POST":
         email = request.data['email']
-        name = request.data['name']
-        Add_user_to_mailing_list(email, name)   
+        Add_user_to_mailing_list(email)   
         return Response({"message" : "User Added to Successful"}, status=status.HTTP_200_OK)
     else:
         return Response({"message" : "Not successful"}, status=status.HTTP_400_BAD_REQUEST)
