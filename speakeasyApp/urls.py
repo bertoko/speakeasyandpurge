@@ -13,8 +13,8 @@ urlpatterns =[
     #article api,
     path('api/v1.0/article/', views.Article_fun, name="article"),
     path("api/v1.0/update_article/<int:id>/", views.Update_article),#
-    path("api/v1.0/newsletter/", views.Newsletter_subscribers),
     path('api/v1.0/cancel/', views.Api_Cancel),
+    path('api/v1.0/add_user_to_mailing_list/', views.Add_user_to_mailing_list),
     path('api/v1.0/one_time_payment/', views.One_time_payment),
     path("staffing/", views.Make_user_admin ), #
     path("api/v1.0/create_session_api/",

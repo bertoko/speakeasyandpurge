@@ -468,7 +468,7 @@ def Get_newsletter_subscribers():
 
 
 
-def Add_user_to_mailing_list(email):
+def Mail_chimps_config(email):
     api_key = settings.MAILCHIMP_API_KEY
     data_center = settings.MAILCHIMP_DATA_CENTER
     list_id = settings.MAILCHIMP_EMAIL_LIST_ID
@@ -489,10 +489,10 @@ def Add_user_to_mailing_list(email):
 
 
 @api_view(['GET', 'POST'])
-def Newsletter_subscribers(request):
+def Add_user_to_mailing_list(request):
     if request.method == "POST":
         email = request.data['email']
-        Add_user_to_mailing_list(email)   
+        Mail_chimps_config(email)   
         return Response({"message" : "User Added to Successful"}, status=status.HTTP_200_OK)
     else:
         return Response({"message" : "Not successful"}, status=status.HTTP_400_BAD_REQUEST)
