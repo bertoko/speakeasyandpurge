@@ -478,13 +478,11 @@ def Mail_chimps_config(email, name):
         "server": data_center,
         
     })
-
-
     member_info = {
         "email_address": email,
         "status": "subscribed",
         'merge_fields': {
-            "NAME": name,
+            "FNAME": name,
          
         }
         
@@ -503,11 +501,30 @@ def Add_user_to_mailing_list(request):
     if request.method == "POST":
         email = request.data['email']
         name = request.data['name']
-        Mail_chimps_config(email, name)   
-        return Response({"message" : "User Added to Successful"}, status=status.HTTP_200_OK)
-    else:
-        return Response({"message" : "Not successful"}, status=status.HTTP_400_BAD_REQUEST)
-
+        api_key = settings.MAILCHIMP_API_KEY
+        data_center = settings.MAILCHIMP_DATA_CENTER
+        list_id = settings.MAILCHIMP_EMAIL_LIST_ID
+        mailchimp = Client()
+        mailchimp.set_config({
+            "api_key": api_key,
+            "server": data_center,
+            
+        })
+        member_info = {
+            "email_address": email,
+            "status": "subscribed",
+            'merge_fields': {
+                "FNAME": name,
+            
+            }
+            
+        }
+        try:
+            data = mailchimp.lists.add_list_member(list_id, member_info)
+            return Response(data, status=status.HTTP_200_OK)
+        except ApiClientError as error:
+            return Response(format(error.text), status=status.HTTP_200_OK)
+           
 
 
 @api_view(['GET', 'POST'])
