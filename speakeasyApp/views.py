@@ -468,7 +468,7 @@ def Get_newsletter_subscribers():
 
 
 
-def Mail_chimps_config(email):
+def Mail_chimps_config(email, name):
     api_key = settings.MAILCHIMP_API_KEY
     data_center = settings.MAILCHIMP_DATA_CENTER
     list_id = settings.MAILCHIMP_EMAIL_LIST_ID
@@ -476,15 +476,25 @@ def Mail_chimps_config(email):
     mailchimp.set_config({
         "api_key": api_key,
         "server": data_center,
+        
     })
+
 
     member_info = {
         "email_address": email,
         "status": "subscribed",
+        'merge_fields': {
+            "NAME": name,
+         
+        }
+        
     }
-    response = mailchimp.lists.add_list_member(list_id, member_info)
+    try:
+        response = mailchimp.lists.add_list_member(list_id, member_info)
+        print("response: {}".format(response))
+    except ApiClientError as error:
+        print("An exception occurred: {}".format(error.text))
 
-    return response
 
 
 
@@ -492,7 +502,8 @@ def Mail_chimps_config(email):
 def Add_user_to_mailing_list(request):
     if request.method == "POST":
         email = request.data['email']
-        Mail_chimps_config(email)   
+        name = request.data['name']
+        Mail_chimps_config(email, name)   
         return Response({"message" : "User Added to Successful"}, status=status.HTTP_200_OK)
     else:
         return Response({"message" : "Not successful"}, status=status.HTTP_400_BAD_REQUEST)

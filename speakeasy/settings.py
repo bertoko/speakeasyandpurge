@@ -180,6 +180,8 @@ MAILCHIMP_EMAIL_LIST_ID = os.getenv('MAILCHIMP_EMAIL_LIST_ID')
 
 
 
+
+
 #STATICFILES_DIRS = ( os.path.join('static'), )
 
 #STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
