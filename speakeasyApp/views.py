@@ -17,6 +17,7 @@ from mailchimp_marketing import Client
 from mailchimp_marketing.api_client import ApiClientError
 
 
+
 #import for background schuduler
 import threading
 import schedule
@@ -419,7 +420,6 @@ def stripe_webhook(request):
         user.subscription_type = subscription_type
         user.save()
         #send mail to user for successful subscription
-        print("Subscription Successful")
         content = {
                 'user': user.first_name,
                 'message': '''Your subscription was successful.
@@ -465,37 +465,6 @@ def Get_newsletter_subscribers():
 
 
 
-
-
-
-def Mail_chimps_config(email, name):
-    api_key = settings.MAILCHIMP_API_KEY
-    data_center = settings.MAILCHIMP_DATA_CENTER
-    list_id = settings.MAILCHIMP_EMAIL_LIST_ID
-    mailchimp = Client()
-    mailchimp.set_config({
-        "api_key": api_key,
-        "server": data_center,
-        
-    })
-    member_info = {
-        "email_address": email,
-        "status": "subscribed",
-        'merge_fields': {
-            "FNAME": name,
-         
-        }
-        
-    }
-    try:
-        response = mailchimp.lists.add_list_member(list_id, member_info)
-        print("response: {}".format(response))
-    except ApiClientError as error:
-        print("An exception occurred: {}".format(error.text))
-
-
-
-
 @api_view(['GET', 'POST'])
 def Add_user_to_mailing_list(request):
     if request.method == "POST":
@@ -514,10 +483,8 @@ def Add_user_to_mailing_list(request):
             "email_address": email,
             "status": "subscribed",
             'merge_fields': {
-                "FNAME": name,
-            
+                "NAME": name,
             }
-            
         }
         try:
             data = mailchimp.lists.add_list_member(list_id, member_info)
@@ -968,16 +935,57 @@ def One_time_payment(request):
     return Response( status=status.HTTP_200_OK)
 
 
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def Check_User_Status (request):
+    today = datetime.date.today()   
+    email = request.data['email']
+    try:
+        user = CustomUser.objects.get(email=email)
+        if (user.subscription_type == "subscription") and (user.is_subscription_active is True):
+            return Response({
+            'email': user.email,
+            'name': user.last_name + "  " + user.first_name,
+            'is_subscription_active': user.is_subscription_active,
+            "subscription_type": user.subscription_type,
+            'message': "Login Successful",
+            'status': status.HTTP_200_OK
+
+            })
+
+        elif (user.date_subscribed == None) or (user.date_subscribed.strftime('%Y%m%d') < today.strftime('%Y%m%d')):
+            return Response({
+                'email': user.email,
+                'name': user.last_name + " " + user.first_name,
+                'is_subscription_active': False,
+                'message': "subscription is due",
+                "subscription_type": user.subscription_type,
+                'status': status.HTTP_200_OK
 
 
+            })
+        else:
+
+            return Response({
+                'email': user.email,
+                'name': user.last_name + "  " + user.first_name,
+                'is_subscription_active': user.is_subscription_active,
+                "subscription_type": user.subscription_type,
+                'message': "Login Successful",
+                'status': status.HTTP_200_OK
+
+            })
 
 
-'''
-   data = stripe.PaymentMethod.attach(
-        "pm_1J9CeyAdOeA3tjlCpUdMIvql",
-        customer="cus_JmojqQitjkqfgc",
-    )
-stripe.api_key = settings.STRIPE_SECRET_KEY
+    except:
+        return Response({ 
+            'error_message': "User Does Not exist" ,
+            'status' : status.HTTP_400_BAD_REQUEST
+            })
+
+    
+
+
     
 def run_continuously(interval=20):
     """Continuously run, while executing pending jobs at each
@@ -1012,6 +1020,7 @@ def Check_due_subscribed_users():
         date_subscribed__range=[start_date, end_date]
     ).values_list('email', flat=True)
     if due_subscribers:
+        print(due_subscribers)
         content = {
             'due_subscribers': "kelvin not soon"
         }
@@ -1031,7 +1040,7 @@ def Check_due_subscribed_users():
             due_subscribers,
         )
         msg.content_subtype = "html" 
-        msg.send(fail_silently=False)
+        #msg.send(fail_silently=False)
         return Response(status=status.HTTP_200_OK)
     else:
         print("no due subscribers")
@@ -1039,15 +1048,12 @@ def Check_due_subscribed_users():
     return Response(status=status.HTTP_200_OK)
 
 
-schedule.every().second.do(Check_due_subscribed_users)
+#schedule.every().second.do(Check_due_subscribed_users)
 
 # Start the background thread
-stop_run_continuously = run_continuously()
+#stop_run_continuously = run_continuously()
 
 # Do some other things...
-time.sleep(20)
+#time.sleep(120)
 
-
-
-'''
 
