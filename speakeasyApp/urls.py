@@ -15,8 +15,7 @@ urlpatterns =[
     path("api/v1.0/update_article/<int:id>/", views.Update_article),#
     path('api/v1.0/cancel/', views.Api_Cancel),
     path('api/v1.0/add_user_to_mailing_list/', views.Add_user_to_mailing_list),
-    path('api/v1.0/one_time_payment/', views.One_time_payment),
-     path('api/v1.0/check_status/', views.Check_User_Status),
+    path('api/v1.0/check_status/', views.Check_User_Status),
     path("staffing/", views.Make_user_admin ), #
     path("api/v1.0/create_session_api/", views.Create_checkout_session_api),  # Create_sub 
     #stripe configuration and website url
@@ -41,8 +40,6 @@ urlpatterns =[
     #path('deletevideo/<int:id>/', views.Webdelete_video, name="Delete_video"),
     #path('saving/', views.Saving, name="saving"),
     #path('funnel/', views.Funnel, name="funnel"),
-    
-    
 ]  
 
 

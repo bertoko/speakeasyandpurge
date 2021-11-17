@@ -303,10 +303,11 @@ def Api_Cancel(request):
 
     if (user.subscription_type == "subscription"):
         try:
-            stripe.Subscription.modify(subscription_id)
+            #Modify was use instead of delete, the reason being that,the subscription will be active till the 
+            #the current subcription expired. and customer will not be charge again.
+            data = stripe.Subscription.modify(subscription_id)
             user.is_subscription_active = False
             user.save()
-
             #send mail to user for successful subscription
             content = {
                 'user': user.first_name,
@@ -316,7 +317,7 @@ def Api_Cancel(request):
             }
             send_to = email
             send_from = EMAIL_HOST_USER
-            subject = "Unsubscription"
+            subject = "Cancel subscription"
             message = get_template('email_template.html').render(content)
             msg = EmailMessage(
                 subject,
@@ -327,22 +328,24 @@ def Api_Cancel(request):
             msg.content_subtype = "html"
             msg.send(fail_silently=False)
             return Response({
-                        'message': "Unsubscription Successful",
+                        'message': "You have successfuly cancelled your subscription",
                         'is_subscription_active': False,
                         "subscription_type": user.subscription_type,
                         'status': status.HTTP_200_OK
                         })
         except:
             message = {
-                "message" : " subscription does not exist!"
+                "message" : " subscription is not active!",
+                status:301
             }
-            return Response(message, status=status.HTTP_200_OK) 
+            return Response(message, status=301) 
         
     else:
         message = {
-                "message" : " subscription does not exist !"
+                "message" : " subscription does not exist on this account!",
+                status: 301
             }
-        return Response(message, status=status.HTTP_200_OK)
+        return Response(message, status=400)
 
 
     
@@ -575,7 +578,7 @@ def  Show_video(request):
         video = Video.objects.all()
         videos = VideoSerializer(video, many=True)
         return Response(videos.data, status= status.HTTP_200_OK)
-    return Response(videos.errors, status= status.HTTP_400_BAD_REQUEST)
+    return Response( status= status.HTTP_400_BAD_REQUEST)
 
 
 
@@ -751,95 +754,8 @@ def RegisterUser(request):
             return Response(register.data, status= status.HTTP_200_OK)
     return Response(register.errors, status= status.HTTP_400_BAD_REQUEST)
 
-class HelloView(APIView):
-    permission_classes = (IsAuthenticated,)  
-    def get(self, request):
-        content = {'message': 'Hello, World!'}
-        return Response(content) 
 
 
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def example(request, format=None):
-    content = {
-        'status': 'request was permitted'
-    }
-    return Response(content)
-
-#funtion tha will handle subscription and creact charge
-@api_view(['GET', 'POST'])
-@permission_classes([IsAuthenticated])
-def Subscribe_user( request):
-    #it will return Todays date
-    today = datetime.date.today()
-    twomorow = today - datetime.timedelta(days = 29 ) 
-    start_date = today- timedelta(days=27)
-    end_date = today - timedelta(days=30)
-    #it will give you 30 days interval
-    expiring_date =  today + datetime.timedelta(days = 30 )
-    if request.method == "POST":
-        email = request.data.get('email')
-        user = CustomUser.objects.get(email=email)
-        content={
-            'user' : user.email
-        }
-        #update user subscription to be  active
-        user.is_subscription_active = True
-        user.date_subscribed  = start_date
-        user.save()
-        #send mail to user for successful subscription
-        content = {
-            'user': user.first_name,
-            'message' : '''Your subscription was successful.
-                                Login to get started using the app 
-                                Your subscription will expire on: '''+str(expiring_date)
-            }
-
-        send_to = email
-        send_from = EMAIL_HOST_USER
-        subject = "Subscription Successful"
-        message = get_template('email_template.html').render(content)
-        msg = EmailMessage(
-            subject,
-            message,
-            send_from,
-            [send_to],
-        )
-        msg.content_subtype = "html" 
-        msg.send(fail_silently=False)
-    return Response(content, status= status.HTTP_200_OK)
-
-#@sched.scheduled_job('interval', seconds = 10 )
-@api_view(['GET', 'POST'])
-def Check_due_subscribers(request):
-    today = date.today()
-    start_date = today- timedelta(days=27)
-    end_date = today - timedelta(days=30)
-    due_subscribers = CustomUser.objects.filter(
-                                    date_subscribed__range=[end_date, start_date]
-                                    ).values_list('email', flat=True)
-
-    content =  {
-        'due_subscribers' : "kelvin not noon"       
-    }
-
-    content = {
-            
-            'message' : 'Your subscription will expire Soon '
-    }
-    
-    send_from = EMAIL_HOST_USER
-    subject = "Reminder"
-    message = get_template('email_template.html').render(content)
-    msg = EmailMessage(
-        subject,
-        message,
-        send_from,
-        due_subscribers,
-    )
-    msg.content_subtype = "html" 
-    msg.send(fail_silently=False)
-    return Response( status= status.HTTP_200_OK)
     
 
 #For Admin to make user staff for ADMIN only
@@ -866,73 +782,6 @@ def Get_all_users(request):
     return Response(users.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-#creating a check_out session
-@api_view(['GET', 'POST'])
-@permission_classes([IsAuthenticated])
-def One_time_payment(request):
-    today = datetime.date.today()
-    expiring_date = today + timedelta(days=30)
-    if request.method == 'POST':
-        amount = request.data.get("amount")
-        email = request.data.get("email")
-        tokenId = request.data.get("tokenId")
-        try:
-            stripe.api_key = settings.STRIPE_SECRET_KEY
-            charge_data = stripe.Charge.create(
-            amount= amount,
-            currency="usd",
-            source=tokenId,
-            description="charge for Speakeasy and Purge services",
-            )
-            payment_state =  charge_data["status"]
-            #print(charge_data)
-            if payment_state == "succeeded":
-                user = CustomUser.objects.get(email=email)
-                content = {
-                    'user': user.email
-                }
-                data = {
-                    "status" : payment_state,
-                    "payment_id" : charge_data["id"],
-                    "is_subscription_active": True,
-                    "subscription_type": "SUBSCRIPTION",
-                    "email" : user.email
-                }
-
-                #update user subscription to be  active
-                user.is_subscription_active = True
-                user.date_subscribed = today
-                user.stripeSubscriptionId = charge_data["id"]
-                user.subscription_type = "ONE_TIME_PAYMENT"
-                user.save()
-                #send mail to user for successful subscription
-                content = {
-                    'user': user.first_name,
-                    'message': '''Congratulation! Your subscription Was Successful,
-                                            Login to get start using the App
-                                            Your subscription will expire on: '''+str(expiring_date)
-                }
-                send_to = email
-                send_from = EMAIL_HOST_USER
-                subject = "Subscription Successful"
-                message = get_template('email_template.html').render(content)
-                msg = EmailMessage(
-                    subject,
-                    message,
-                    send_from,
-                    [send_to],
-                )
-                msg.content_subtype = "html"
-                msg.send(fail_silently=False)
-                return Response(data, status=status.HTTP_200_OK) 
-        except:
-            return Response({
-                'message': "subscription failed",
-                'status': status.HTTP_400_BAD_REQUEST
-            })
-
-    
-    return Response( status=status.HTTP_200_OK)
 
 
 @api_view(['GET', 'POST'])
@@ -987,7 +836,7 @@ def Check_User_Status (request):
 
 
     
-def run_continuously(interval=20):
+def run_continuously(interval=24):
     """Continuously run, while executing pending jobs at each
     elapsed time interval.
     @return cease_continuous_run: threading. Event which can
@@ -1022,10 +871,6 @@ def Check_due_subscribed_users():
     if due_subscribers:
         print(due_subscribers)
         content = {
-            'due_subscribers': "kelvin not soon"
-        }
-
-        content = {
 
             'message': 'Your subscription will expire Soon '
         }
@@ -1052,8 +897,8 @@ def Check_due_subscribed_users():
 
 # Start the background thread
 #stop_run_continuously = run_continuously()
-
+#24 hours = 8640
 # Do some other things...
-#time.sleep(120)
+#time.sleep(8640)
 
 
