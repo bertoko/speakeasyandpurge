@@ -61,12 +61,8 @@ def Home(request):
 
 
 def Webpost_video(request):
-    if request.method == 'POST':
-        video = VideoForm(request.POST, request.FILES)
-        if video.is_valid():
-            video.save()
-            return redirect('/showvideo')
-    return render(request, 'post_video.html')
+
+    return render(request, 'email_template.html')
 
 #Post_video   Post_article
 
@@ -256,6 +252,7 @@ def Stripe_config_pay(request):
 def Create_checkout_session(request):
     if request.method == 'GET':
         domain_url ="https://speakeasyandpurge-eovuo.ondigitalocean.app/"
+        #domain_url_test = https: // speakeasyandpurge-eovuo.ondigitalocean.app/test_webhook/
         local_url = 'http://localhost:8000/'
         stripe.api_key = settings.STRIPE_SECRET_KEY
         try:
@@ -275,6 +272,7 @@ def Create_checkout_session(request):
             return JsonResponse({'sessionId': checkout_session['id']})
         except Exception as e:
             return JsonResponse({'error': str(e)})
+
 
 
 #@login_required
@@ -347,8 +345,60 @@ def Api_Cancel(request):
             }
         return Response(message, status=400)
 
+  ###################################################################################
+  # test checkout session
+  # #################################################################################  
 
-    
+@api_view(['POST', 'GET'])
+def Create_checkout_session_api_test(request):
+    if request.method == 'POST':
+        domain_url ="https://speakeasyandpurge-eovuo.ondigitalocean.app/"
+        local_url = 'http://localhost:8000/'
+        stripe.api_key = settings.STRIPE_SECRET_KEY_TEST
+        payment_type = request.data.get("payment_type")
+        if payment_type == 'subscription' :
+            try:
+                checkout_session = stripe.checkout.Session.create(
+                    client_reference_id=request.user.id if request.user.is_authenticated else None,
+                    success_url=domain_url+'success?session_id={CHECKOUT_SESSION_ID}',
+                    cancel_url=domain_url+'cancel/',
+                    payment_method_types=['card'],
+                    mode='subscription', 
+                    line_items=[
+                        {
+                            'price': settings.STRIPE_PRICE_ID_TEST,
+                            'quantity': 1,
+                        }
+                    ]
+                )
+                return Response({'sessionId': checkout_session['id']}, status=status.HTTP_200_OK)
+            except Exception as e:
+                return JsonResponse({'error': str(e)})
+        elif payment_type == 'payment' :
+            try:
+                checkout_session = stripe.checkout.Session.create(
+                    client_reference_id=request.user.id if request.user.is_authenticated else None,
+                    success_url=domain_url +
+                    'success?session_id={CHECKOUT_SESSION_ID}',
+                    cancel_url=domain_url+'cancel/',
+                    payment_method_types=['card'],
+                    mode='payment',
+                    line_items=[
+                        {
+                            'price': settings.STRIPE_ONE_TIME_PAYMENT_ID_TEST,
+                            'quantity': 1,
+                        }
+                    ]
+                )
+                return Response({'sessionId': checkout_session['id']}, status=status.HTTP_200_OK)
+            except Exception as e:
+                return JsonResponse({'error': str(e)})
+        else:
+            return Response({"message": "Wrong payment_type"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
 @api_view(['POST', 'GET'])
 def Create_checkout_session_api(request):
     if request.method == 'POST':
@@ -396,7 +446,52 @@ def Create_checkout_session_api(request):
         else:
             return Response({"message": "Wrong payment_type"}, status=status.HTTP_400_BAD_REQUEST)
 
-            
+ #stripe Webhook that handle subscription
+@csrf_exempt
+def stripe_webhook_test(request):
+    event = None
+    today = datetime.date.today()
+    expiring_date = today + timedelta(days=30)
+    payload = request.body.decode('utf-8')
+    out_put = json.loads(payload)
+    checkout_session = out_put['type']
+    event = out_put['data']['object']
+
+    if checkout_session == "checkout.session.completed":
+        email = event['customer_details']['email']
+        subscription_type = event['mode']
+        stripe_subscription_id = event.get('subscription', "")
+        stripe_customer_id = event.get('customer')
+        user = CustomUser.objects.get(email=email)
+        #update user subscription to be  active
+        user.is_subscription_active = True
+        user.date_subscribed = today
+        user.stripeSubscriptionId  = stripe_subscription_id
+        user.stripeCustomerId = stripe_customer_id
+        user.subscription_type = subscription_type
+        user.save()
+        #send mail to user for successful subscription
+        content = {
+                'user': user.first_name,
+                'message': '''Your subscription was successful.
+                                Login to get started using the app. 
+                                Your subscription will expire on: '''+str(expiring_date)
+                } #
+        send_to = email
+        send_from = EMAIL_HOST_USER
+        subject = "Subscription Successful"
+        message = get_template('email_template.html').render(content)
+        msg = EmailMessage(
+                subject,
+                message,
+                send_from,
+                [send_to],
+        )
+        msg.content_subtype = "html"
+        msg.send(fail_silently=False)
+        return Response(status= status.HTTP_200_OK)
+    
+    return HttpResponse(status=200)           
 
 #stripe Webhook that handle subscription
 @csrf_exempt
